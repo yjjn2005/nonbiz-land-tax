@@ -10,7 +10,7 @@ const CORS_HEADERS = {
 // 법제처 국가법령정보 Open API — 조세심판원 재결례(ttSpecialDecc), 법원 판례(prec)
 const LAW_OC = 'yjjn2005';
 const LAW_SEARCH_BASE = 'https://www.law.go.kr/DRF/lawSearch.do';
-const ALLOWED_LAW_TARGETS = new Set(['ttSpecialDecc', 'prec']);
+const ALLOWED_LAW_TARGETS = new Set(['ttSpecialDecc', 'prec', 'expc']);
 
 export default {
   async fetch(request, env) {

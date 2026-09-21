@@ -233,6 +233,7 @@
   <nav class="tabnav">
     <button class="tabbtn active" data-tab="calc" onclick="switchTab('calc')">직접계산</button>
     <button class="tabbtn" data-tab="legal" onclick="switchTab('legal')">조세심판원 판례검색</button>
+    <button class="tabbtn" data-tab="ref" onclick="switchTab('ref')">지목별 근거자료</button>
     <button class="tabbtn" data-tab="sync" onclick="switchTab('sync')">기기간 동기화</button>
   </nav>
 
@@ -419,6 +420,49 @@
   </section>
   </div><!-- /tab-legal -->
 
+  <div class="tabpanel" id="tab-ref" style="display:none;">
+  <!-- ===================== 지목별 근거자료 ===================== -->
+  <section class="block">
+    <div class="blockTitle">지목별 사업용 인정 근거자료</div>
+    <div class="card">
+      <div class="field">
+        <label for="refLandType">토지 유형</label>
+        <select id="refLandType" onchange="loadRefData()">
+          <option value="farm">농지 (전·답·과수원)</option>
+          <option value="forest">임야</option>
+          <option value="pasture">목장용지</option>
+          <option value="house">주택 부속토지 (정착면적 배율 초과분)</option>
+          <option value="villa">별장 부속토지</option>
+          <option value="etc">그 밖의 토지 (나대지·잡종지)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>① 법조항</h3>
+      <div id="refLawArticle" style="font-size:13.5px;color:var(--soil-700);line-height:1.7;"></div>
+    </div>
+
+    <div class="card">
+      <h3>② 유권해석 (법령해석례)</h3>
+      <div id="refExpcStatus" style="font-size:12.5px;color:var(--soil-500);"></div>
+      <div id="refExpcResults"></div>
+    </div>
+
+    <div class="card">
+      <h3>③ 조세심판원 결정례 — 대표 사례</h3>
+      <div id="refDeccStatus" style="font-size:12.5px;color:var(--soil-500);"></div>
+      <div id="refDeccResults"></div>
+    </div>
+
+    <div class="card">
+      <h3>④ 법원 판례 — 대표 사례</h3>
+      <div id="refPrecStatus" style="font-size:12.5px;color:var(--soil-500);"></div>
+      <div id="refPrecResults"></div>
+    </div>
+  </section>
+  </div><!-- /tab-ref -->
+
   <div class="tabpanel" id="tab-sync" style="display:none;">
   <div class="sync">
     <h3>기기 간 동기화</h3>
@@ -545,6 +589,64 @@ const TYPE_CONFIGS = {
       if (!isBiz) reasons.push('건축물이 없는 나대지·잡종지로 재산세 종합합산과세대상에 해당해 원칙적으로 전 기간 비사업용(제104조의3 제1항 제4호, 시행령 제168조의11)');
       return {isBiz, reasons};
     }
+  }
+};
+
+const REF_DATA = {
+  farm: {
+    expcQuery: '농지',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제1호</b> — 농지(전·답·과수원)로서 다음 중 하나에 해당하면 비사업용:<br>
+      가. 소유자가 농지 소재지(또는 연접 시·군·구, 직선거리 30km 이내)에 거주하지 않거나 스스로 경작하지 않는 농지 (「농지법」상 소유 가능한 농지 등은 제외)<br>
+      나. 특별시·광역시·시지역의 도시지역(주거·상업·공업지역) 안의 농지 — 녹지지역·개발제한구역·군/읍·면지역은 제외. 재촌·자경 중 도시지역 편입 시 편입일부터 일정기간은 사업용으로 인정</p>
+      <p><b>시행령 제168조의8(농지의 범위 등)</b> — 재촌·자경의 구체적 판정기준, 농지법상 예외(상속농지 등) 규정</p>
+      <p><b>시행령 제168조의14 제3항</b> — 8년 이상 재촌·자경한 직계존속·배우자로부터 상속·증여받은 농지, 상속개시일부터 5년 이내 양도하는 농지 등은 비사업용에서 제외</p>
+    `
+  },
+  forest: {
+    expcQuery: '임야',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제2호</b> — 임야는 원칙적으로 비사업용. 다만 다음은 제외:<br>
+      가. 산림유전자원보호림·보안림·채종림 등 공익상 필요한 임야<br>
+      나. 임야 소재지에 거주하는 자가 소유한 임야<br>
+      다. 거주·사업과 직접 관련 있다고 인정되는 임야로서 대통령령이 정하는 것</p>
+      <p><b>시행령 제168조의9(임야의 범위 등)</b> — 공익임야·재촌 요건의 구체적 판정기준</p>
+    `
+  },
+  pasture: {
+    expcQuery: '목장',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제3호</b> — 목장용지 중 다음은 비사업용:<br>
+      가. 기준면적을 초과하는 목장용지<br>
+      나. 도시지역(녹지지역·개발제한구역 제외) 안의 목장용지<br>
+      다. 축산업을 경영하지 않는 자가 소유하는 목장용지</p>
+      <p><b>시행령 제168조의10(목장용지의 범위 등)</b> — 가축별 기준면적 산정방법</p>
+    `
+  },
+  house: {
+    expcQuery: '정착면적',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제4호 가목</b> — 주택 부수토지 중 주택정착면적에 지역별 배율(도시지역 안 5배, 도시지역 밖 10배)을 곱한 면적을 초과하는 토지는 비사업용</p>
+      <p><b>시행령 제168조의11 제1항</b> — 배율 산정 시 지역 구분(도시지역/그 밖의 지역) 기준, 고가주택 특례 등</p>
+    `
+  },
+  villa: {
+    expcQuery: '별장',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제4호 나목</b> — 별장 및 그 부속토지는 비사업용. 다만 읍·면 지역 소재 + 건물 연면적 150㎡ 이내 + 부속토지 660㎡ 이내 + 기준시가 합계 2억원 이하 + 수도권·도시지역·지정지역·토지거래허가구역 제외 요건을 모두 갖춘 농어촌주택은 별장에서 제외</p>
+      <p><b>시행령 제168조의13(별장 등의 범위)</b> — 별장 판정기준 및 농어촌주택 제외요건의 세부기준</p>
+    `
+  },
+  etc: {
+    expcQuery: '잡종지',
+    lawArticle: `
+      <p><b>소득세법 제104조의3 제1항 제4호 다목</b> — 농지·임야·목장용지 외의 토지(나대지·잡종지 등, 재산세 종합합산과세대상) 중 다음을 제외한 토지는 비사업용:<br>
+      가. 재산세가 비과세·감면되는 토지<br>
+      나. 재산세 별도합산·분리과세대상 토지<br>
+      다. 거주·사업과 직접 관련 있다고 인정되는 토지로서 대통령령이 정하는 것</p>
+      <p><b>시행령 제168조의11 제1항 제2호</b> — 주차장용 토지: ①「주차장법」상 부설주차장(주택 부설주차장 제외) 설치기준면적 이내이거나, ②주차장운영업자가 소유하며 노외주차장으로 사용하고 연간 수입금액이 토지가액의 일정비율(기획재정부령, 3%) 이상인 경우 사업용으로 인정</p>
+      <p><b>시행령 제168조의11 제1항 제13호</b> — 주택을 소유하지 않는 1세대가 소유한 1필지의 나지로서 어느 용도로도 사용되지 않는 토지 등 별도 예외</p>
+    `
   }
 };
 
@@ -954,10 +1056,15 @@ function render(){
 
 // ---- 탭 전환 ----
 function switchTab(name){
-  ['calc','legal','sync'].forEach(t=>{
+  ['calc','legal','ref','sync'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
     document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
   });
+  if (name === 'ref'){
+    const mainType = document.getElementById('landType').value;
+    document.getElementById('refLandType').value = mainType;
+    loadRefData();
+  }
 }
 
 const CHIP_SUGGESTIONS = {
@@ -980,6 +1087,68 @@ function useChip(q){
   document.getElementById('legalQuery').value = q;
   legalQueryManuallyEdited = true;
   searchLegal();
+}
+
+// ---- 지목별 근거자료 탭 ----
+function renderRefList(target, items, containerId){
+  const container = document.getElementById(containerId);
+  if (!items || items.length === 0){
+    container.innerHTML = '<div style="font-size:13px;color:var(--soil-500);">관련 자료가 검색되지 않았습니다.</div>';
+    return;
+  }
+  container.innerHTML = items.map(it=>{
+    if (target === 'ttSpecialDecc'){
+      const link = 'https://www.law.go.kr' + it['행정심판재결례상세링크'];
+      return `<div class="legalItem">
+        <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
+        <div class="legalMeta"><b>${it['청구번호'] || '-'}</b> · 의결일자 ${it['의결일자'] || '-'} · 조세심판원</div>
+      </div>`;
+    } else if (target === 'prec'){
+      const link = 'https://www.law.go.kr' + it['판례상세링크'];
+      return `<div class="legalItem">
+        <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
+        <div class="legalMeta"><b>${it['사건번호'] || '-'}</b> · 선고일자 ${it['선고일자'] || '-'}</div>
+      </div>`;
+    } else { // expc
+      const link = 'https://www.law.go.kr' + it['법령해석례상세링크'];
+      return `<div class="legalItem">
+        <a href="${link}" target="_blank" rel="noopener">${it['안건명']}</a>
+        <div class="legalMeta">안건번호 <b>${it['안건번호'] || '-'}</b> · 회신일자 ${it['회신일자'] || '-'} · ${it['회신기관명'] || '-'}</div>
+      </div>`;
+    }
+  }).join('');
+}
+
+async function fetchRef(target, query, statusId, resultId){
+  const statusEl = document.getElementById(statusId);
+  statusEl.textContent = '검색 중...';
+  try{
+    const res = await fetch(`${SYNC_SERVER}/legal-search?target=${target}&query=${encodeURIComponent(query)}&display=5`);
+    if (!res.ok) throw new Error('요청 실패');
+    const data = await res.json();
+    const rootKey = target === 'ttSpecialDecc' ? 'Decc' : (target === 'prec' ? 'PrecSearch' : 'Expc');
+    const itemKey = target === 'ttSpecialDecc' ? 'decc' : (target === 'prec' ? 'prec' : 'expc');
+    const root = data[rootKey] || {};
+    let items = root[itemKey];
+    if (!items) items = [];
+    if (!Array.isArray(items)) items = [items];
+    const total = root.totalCnt || items.length;
+    statusEl.textContent = `총 ${total}건 중 ${items.length}건`;
+    renderRefList(target, items, resultId);
+  }catch(e){
+    statusEl.textContent = '검색 실패: 네트워크 또는 서버 상태를 확인하세요.';
+    renderRefList(target, [], resultId);
+  }
+}
+
+function loadRefData(){
+  const type = document.getElementById('refLandType').value;
+  const cfg = TYPE_CONFIGS[type];
+  const ref = REF_DATA[type];
+  document.getElementById('refLawArticle').innerHTML = ref.lawArticle;
+  fetchRef('expc', ref.expcQuery, 'refExpcStatus', 'refExpcResults');
+  fetchRef('ttSpecialDecc', cfg.legalQuery, 'refDeccStatus', 'refDeccResults');
+  fetchRef('prec', cfg.legalQuery, 'refPrecStatus', 'refPrecResults');
 }
 
 // ---- 조세심판원 결정례 / 법원 판례 검색 (Cloudflare Worker 프록시 → 법제처 Open API) ----
