@@ -211,6 +211,34 @@
   .basis summary{cursor:pointer;color:var(--accent-deep);font-weight:600;margin-bottom:8px;}
   .basis ul{margin:6px 0 0;padding-left:18px;}
   .basis li{margin-bottom:5px;}
+
+  .sync{
+    margin-top:18px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px 22px 22px;
+  }
+  .sync h2{
+    font-size:15px;margin:0 0 14px;color:var(--accent-deep);font-weight:700;
+    border-bottom:1px solid var(--line);padding-bottom:10px;
+  }
+  .syncRow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .syncField{flex:1;min-width:140px;}
+  .syncField label{font-size:12.5px;color:var(--soil-500);margin-bottom:6px;display:block;}
+  .syncField input{
+    width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--line);
+    border-radius:5px;background:var(--wheat-50);font-family:inherit;
+  }
+  .syncBtn{
+    padding:10px 16px;border:1px solid var(--accent-deep);border-radius:5px;
+    background:var(--accent-deep);color:#fff;font-size:13.5px;font-weight:600;
+    cursor:pointer;font-family:inherit;white-space:nowrap;
+  }
+  .syncBtn.ghost{background:#fff;color:var(--accent-deep);}
+  .syncStatus{margin-top:10px;font-size:12.5px;color:var(--soil-500);min-height:16px;}
+  .syncStatus.ok{color:var(--ok);}
+  .syncStatus.err{color:var(--danger);}
 </style>
 </head>
 <body>
@@ -256,7 +284,7 @@
             <option value="11">11개월</option>
           </select>
         </div>
-        <div class="unit">만 보유연수 기준, 3년 미만은 장기보유특별공제 미적용</div>
+        <div class="unit">만 연수로 절사(1년 미만 버림), 3년 미만은 장기보유특별공제 미적용</div>
       </div>
     </div>
 
@@ -303,6 +331,19 @@
       </tbody>
     </table>
     <div class="diff" id="diffLine"></div>
+  </div>
+
+  <div class="sync">
+    <h2>기기 간 동기화</h2>
+    <div class="syncRow">
+      <div class="syncField">
+        <label for="pin">동기화 PIN (숫자 4~8자리, 모든 기기에서 동일하게 입력)</label>
+        <input type="text" id="pin" inputmode="numeric" placeholder="예: 1234">
+      </div>
+      <button class="syncBtn" onclick="saveToCloud()">이 기기 입력값 저장</button>
+      <button class="syncBtn ghost" onclick="loadFromCloud()">다른 기기 값 불러오기</button>
+    </div>
+    <div class="syncStatus" id="syncStatus"></div>
   </div>
 
   <details class="basis">
@@ -367,17 +408,19 @@ function calcTax(gain, surcharge){
   return tax;
 }
 
-function ltcgRate(years, allowed){
+function ltcgRate(years, months, allowed){
   if (!allowed) return 0;
-  if (years < 3) return 0;
-  return Math.min(0.30, years * 0.02);
+  // 세법상 보유연수는 만 연수로 절사(1년 미만 버림) — 개월 입력을 반영해 정확히 절사
+  const wholeYears = Math.floor(years + (months || 0) / 12);
+  if (wholeYears < 3) return 0;
+  return Math.min(0.30, wholeYears * 0.02);
 }
 
 function computeFor(modeKey, inputs){
   const info = MODE_INFO[modeKey];
   const gainRaw = inputs.transfer - inputs.acquire - inputs.expense;
   const gain = Math.max(0, gainRaw);
-  const deductRate = ltcgRate(inputs.years, info.ltcgAllowed);
+  const deductRate = ltcgRate(inputs.years, inputs.months, info.ltcgAllowed);
   const ltcgDeduct = gain * deductRate;
   const afterLtcg = gain - ltcgDeduct;
   const basicDeduct = Math.min(2500000, afterLtcg);
@@ -397,7 +440,8 @@ function getInputs(){
     acquire: Number(document.getElementById('acquire').value) || 0,
     transfer: Number(document.getElementById('transfer').value) || 0,
     expense: Number(document.getElementById('expense').value) || 0,
-    years: Number(document.getElementById('years').value) || 0
+    years: Number(document.getElementById('years').value) || 0,
+    months: Number(document.getElementById('months').value) || 0
   };
 }
 
@@ -448,6 +492,58 @@ function render(){
   document.getElementById(id).addEventListener('input', render);
   document.getElementById(id).addEventListener('change', render);
 });
+
+// ---- 기기 간 동기화 (Cloudflare Worker + KV, PIN 기반) ----
+const SYNC_SERVER = 'https://nonbiz-land-tax-api.yjjn2005.workers.dev';
+
+const savedPin = localStorage.getItem('nonbiz-land-tax-pin');
+if (savedPin) document.getElementById('pin').value = savedPin;
+
+function setSyncStatus(msg, cls){
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = 'syncStatus' + (cls ? ' ' + cls : '');
+}
+
+async function saveToCloud(){
+  const pin = document.getElementById('pin').value.trim();
+  if (!pin){ setSyncStatus('PIN을 입력하세요.', 'err'); return; }
+  localStorage.setItem('nonbiz-land-tax-pin', pin);
+  const payload = { ...getInputs(), mode: currentMode, savedAt: new Date().toISOString() };
+  try{
+    setSyncStatus('저장 중...');
+    const res = await fetch(`${SYNC_SERVER}/sync/${encodeURIComponent(pin)}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('서버 응답 오류');
+    setSyncStatus('저장 완료 — 다른 기기에서 같은 PIN으로 불러올 수 있습니다.', 'ok');
+  }catch(e){
+    setSyncStatus('저장 실패: 네트워크 또는 서버 상태를 확인하세요.', 'err');
+  }
+}
+
+async function loadFromCloud(){
+  const pin = document.getElementById('pin').value.trim();
+  if (!pin){ setSyncStatus('PIN을 입력하세요.', 'err'); return; }
+  localStorage.setItem('nonbiz-land-tax-pin', pin);
+  try{
+    setSyncStatus('불러오는 중...');
+    const res = await fetch(`${SYNC_SERVER}/sync/${encodeURIComponent(pin)}`);
+    if (!res.ok) throw new Error('데이터 없음');
+    const data = await res.json();
+    if (data.acquire !== undefined) document.getElementById('acquire').value = data.acquire;
+    if (data.transfer !== undefined) document.getElementById('transfer').value = data.transfer;
+    if (data.expense !== undefined) document.getElementById('expense').value = data.expense;
+    if (data.years !== undefined) document.getElementById('years').value = data.years;
+    if (data.months !== undefined) document.getElementById('months').value = data.months;
+    if (data.mode) setMode(data.mode); else render();
+    setSyncStatus('불러오기 완료.', 'ok');
+  }catch(e){
+    setSyncStatus('불러오기 실패: 저장된 값이 없거나 서버에 연결할 수 없습니다.', 'err');
+  }
+}
 
 render();
 </script>
