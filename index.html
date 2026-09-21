@@ -182,6 +182,14 @@
   .legalItem a:hover{color:var(--accent-deep);text-decoration:underline;}
   .legalMeta{font-size:12px;color:var(--soil-500);margin-top:3px;}
 
+  .chipRow{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:7px 13px;border:1px solid var(--line);border-radius:16px;
+    background:var(--wheat-50);font-size:12.5px;color:var(--soil-700);
+    cursor:pointer;font-family:inherit;
+  }
+  .chip:hover{background:#efe6d3;border-color:var(--accent);}
+
   .tabnav{
     display:flex;gap:6px;margin-top:24px;border-bottom:2px solid var(--line);
   }
@@ -401,6 +409,10 @@
         </div>
         <div class="unit">"직접계산" 탭에서 선택한 토지유형에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
       </div>
+      <div class="field" style="margin-bottom:0;">
+        <label style="margin-bottom:8px;">자주 찾는 검색어</label>
+        <div class="chipRow" id="legalChips"></div>
+      </div>
       <div id="legalStatus" style="font-size:12.5px;color:var(--soil-500);margin-top:4px;"></div>
       <div id="legalResults" style="margin-top:12px;"></div>
     </div>
@@ -444,7 +456,7 @@
 const TYPE_CONFIGS = {
   farm: {
     label: '농지',
-    legalQuery: '비사업용 토지 농지 재촌자경',
+    legalQuery: '농지 비사업용',
     fields: [
       {id:'farm_jaechon', q:'농지 소재지(또는 연접 시·군·구, 농지로부터 직선거리 30km 이내)에 거주하며 본인이 직접 경작(재촌·자경)하고 있습니까?', def:'y'},
       {id:'farm_city', q:'농지 소재지가 특별시·광역시·시지역의 도시지역 중 주거·상업·공업지역입니까? (녹지지역·개발제한구역·군/읍·면지역은 "아니오")', def:'n'}
@@ -462,7 +474,7 @@ const TYPE_CONFIGS = {
   },
   forest: {
     label: '임야',
-    legalQuery: '비사업용 토지 임야 재촌',
+    legalQuery: '임야 비사업용',
     fields: [
       {id:'forest_exempt', q:'공익임야(산림유전자원보호림·보안림·채종림 등)이거나, 소유자가 임야 소재지에 주민등록을 두고 거주하고 있습니까?', def:'y'}
     ],
@@ -476,7 +488,7 @@ const TYPE_CONFIGS = {
   },
   pasture: {
     label: '목장용지',
-    legalQuery: '비사업용 토지 목장용지 축산업',
+    legalQuery: '목장용지 비사업용',
     fields: [
       {id:'pasture_ok', q:'축산업을 직접 경영하고 있고, 기준면적 이내이며, 도시지역(녹지·개발제한구역 제외) 밖에 소재합니까?', def:'y'}
     ],
@@ -490,7 +502,7 @@ const TYPE_CONFIGS = {
   },
   house: {
     label: '주택 부속토지',
-    legalQuery: '비사업용 토지 주택 부속토지 정착면적 배율',
+    legalQuery: '주택 정착면적',
     fields: [
       {id:'house_ratio', q:'부속토지 면적이 주택 정착면적의 5배(도시지역 밖은 10배) 이내입니까?', def:'y'}
     ],
@@ -504,7 +516,7 @@ const TYPE_CONFIGS = {
   },
   villa: {
     label: '별장 부속토지',
-    legalQuery: '비사업용 토지 별장 부속토지',
+    legalQuery: '별장 부속토지',
     fields: [
       {id:'villa_exempt', q:'읍·면 지역 소재 + 건물 연면적 150㎡ 이내 + 부속토지 660㎡ 이내 + 건물·토지 기준시가 합계 2억원 이하 + 수도권/도시지역/지정지역/토지거래허가구역 제외, 이 요건을 모두 충족합니까?', def:'n'}
     ],
@@ -518,15 +530,19 @@ const TYPE_CONFIGS = {
   },
   etc: {
     label: '그 밖의 토지 (나대지·잡종지)',
-    legalQuery: '비사업용 토지 나대지 잡종지',
+    legalQuery: '잡종지 비사업용',
     fields: [
+      {id:'etc_parking', q:'주차장으로 사용 중입니까? — ①「주차장법」에 따른 부설주차장(주택 부설주차장 제외) 설치기준면적 이내이거나, ②주차장운영업자가 소유하며 노외주차장으로 사용하고 연간 수입금액이 토지가액의 3% 이상인 경우', def:'n'},
       {id:'etc_building', q:'건축 착공 후 정당한 사유 없이 공사가 중단되지 않고 계속 진행 중입니까? (취득일부터 2년 이내 + 착공 이후 건설 중인 기간만 사업용으로 인정)', def:'n'}
     ],
     judge: (v) => {
-      const isBiz = v.etc_building === 'y';
-      const reasons = isBiz
-        ? ['건축물 신축을 위해 착공하여 건설이 진행 중인 기간은 사업에 직접 사용한 기간으로 인정']
-        : ['건축물이 없는 나대지·잡종지로 재산세 종합합산과세대상에 해당해 원칙적으로 전 기간 비사업용(제104조의3 제1항 제5호)'];
+      const parking = v.etc_parking === 'y';
+      const building = v.etc_building === 'y';
+      const isBiz = parking || building;
+      const reasons = [];
+      if (parking) reasons.push('부설주차장 기준면적 이내이거나 요건을 갖춘 주차장운영업용 노외주차장에 해당해 사업용 토지로 인정(시행령 제168조의11 제1항 제2호 가목·다목)');
+      if (building) reasons.push('건축물 신축을 위해 착공하여 건설이 진행 중인 기간은 사업에 직접 사용한 기간으로 인정');
+      if (!isBiz) reasons.push('건축물이 없는 나대지·잡종지로 재산세 종합합산과세대상에 해당해 원칙적으로 전 기간 비사업용(제104조의3 제1항 제4호, 시행령 제168조의11)');
       return {isBiz, reasons};
     }
   }
@@ -547,6 +563,7 @@ function onLandTypeChange(){
   `).join('');
   const legalQueryEl = document.getElementById('legalQuery');
   if (legalQueryEl && !legalQueryManuallyEdited) legalQueryEl.value = cfg.legalQuery;
+  renderLegalChips(type);
   onTypeFieldChange();
 }
 
@@ -941,6 +958,28 @@ function switchTab(name){
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
     document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
   });
+}
+
+const CHIP_SUGGESTIONS = {
+  farm: ['농지 비사업용', '재촌자경', '농지 재촌자경 비사업용', '상속농지 비사업용'],
+  forest: ['임야 비사업용', '임야 재촌', '공익임야'],
+  pasture: ['목장용지 비사업용', '목장용지 축산업'],
+  house: ['주택 정착면적', '주택 부수토지 배율', '고가주택 부수토지'],
+  villa: ['별장 부속토지', '별장 비사업용'],
+  etc: ['잡종지 비사업용', '나대지 비사업용', '잡종지 주차장', '주차장 비사업용 토지', '노외주차장 비사업용']
+};
+
+function renderLegalChips(type){
+  const wrap = document.getElementById('legalChips');
+  if (!wrap) return;
+  const chips = CHIP_SUGGESTIONS[type] || [];
+  wrap.innerHTML = chips.map(q => `<button type="button" class="chip" onclick="useChip('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('');
+}
+
+function useChip(q){
+  document.getElementById('legalQuery').value = q;
+  legalQueryManuallyEdited = true;
+  searchLegal();
 }
 
 // ---- 조세심판원 결정례 / 법원 판례 검색 (Cloudflare Worker 프록시 → 법제처 Open API) ----
