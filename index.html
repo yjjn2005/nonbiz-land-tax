@@ -171,6 +171,16 @@
   .override label.chk{display:flex;align-items:center;gap:8px;margin-bottom:0;color:var(--soil-700);cursor:pointer;}
   .override input[type=checkbox]{width:auto;}
   .override select{margin-top:8px;}
+
+  .legalItem{
+    padding:12px 0;border-bottom:1px solid var(--wheat-100);
+  }
+  .legalItem:last-child{border-bottom:none;}
+  .legalItem a{
+    color:var(--soil-900);font-weight:600;font-size:14px;text-decoration:none;
+  }
+  .legalItem a:hover{color:var(--accent-deep);text-decoration:underline;}
+  .legalMeta{font-size:12px;color:var(--soil-500);margin-top:3px;}
 </style>
 </head>
 <body>
@@ -313,6 +323,26 @@
     <div class="diff" id="diffLine"></div>
   </div>
 
+  <!-- ===================== STEP 4: 판례·심판례 검색 ===================== -->
+  <section class="block">
+    <div class="blockTitle"><span class="stepnum">4</span>관련 조세심판원 결정례·법원 판례</div>
+    <div class="card">
+      <div class="toggle" style="margin-bottom:14px;">
+        <button id="btn-src-decc" class="active" onclick="setLegalSource('ttSpecialDecc')">조세심판원 결정례</button>
+        <button id="btn-src-prec" onclick="setLegalSource('prec')">법원 판례</button>
+      </div>
+      <div class="field">
+        <div class="row2">
+          <input type="text" id="legalQuery" placeholder="예: 비사업용 토지 재촌자경">
+          <button class="syncBtn" onclick="searchLegal()" style="width:100%;">검색</button>
+        </div>
+        <div class="unit">위 판정 내용(토지유형)에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
+      </div>
+      <div id="legalStatus" style="font-size:12.5px;color:var(--soil-500);margin-top:4px;"></div>
+      <div id="legalResults" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
   <div class="sync">
     <h3>기기 간 동기화</h3>
     <div class="syncRow">
@@ -348,6 +378,7 @@
 const TYPE_CONFIGS = {
   farm: {
     label: '농지',
+    legalQuery: '비사업용 토지 농지 재촌자경',
     fields: [
       {id:'farm_jaechon', q:'농지 소재지(또는 연접 시·군·구, 농지로부터 직선거리 30km 이내)에 거주하며 본인이 직접 경작(재촌·자경)하고 있습니까?', def:'y'},
       {id:'farm_city', q:'농지 소재지가 특별시·광역시·시지역의 도시지역 중 주거·상업·공업지역입니까? (녹지지역·개발제한구역·군/읍·면지역은 "아니오")', def:'n'}
@@ -365,6 +396,7 @@ const TYPE_CONFIGS = {
   },
   forest: {
     label: '임야',
+    legalQuery: '비사업용 토지 임야 재촌',
     fields: [
       {id:'forest_exempt', q:'공익임야(산림유전자원보호림·보안림·채종림 등)이거나, 소유자가 임야 소재지에 주민등록을 두고 거주하고 있습니까?', def:'y'}
     ],
@@ -378,6 +410,7 @@ const TYPE_CONFIGS = {
   },
   pasture: {
     label: '목장용지',
+    legalQuery: '비사업용 토지 목장용지 축산업',
     fields: [
       {id:'pasture_ok', q:'축산업을 직접 경영하고 있고, 기준면적 이내이며, 도시지역(녹지·개발제한구역 제외) 밖에 소재합니까?', def:'y'}
     ],
@@ -391,6 +424,7 @@ const TYPE_CONFIGS = {
   },
   house: {
     label: '주택 부속토지',
+    legalQuery: '비사업용 토지 주택 부속토지 정착면적 배율',
     fields: [
       {id:'house_ratio', q:'부속토지 면적이 주택 정착면적의 5배(도시지역 밖은 10배) 이내입니까?', def:'y'}
     ],
@@ -404,6 +438,7 @@ const TYPE_CONFIGS = {
   },
   villa: {
     label: '별장 부속토지',
+    legalQuery: '비사업용 토지 별장 부속토지',
     fields: [
       {id:'villa_exempt', q:'읍·면 지역 소재 + 건물 연면적 150㎡ 이내 + 부속토지 660㎡ 이내 + 건물·토지 기준시가 합계 2억원 이하 + 수도권/도시지역/지정지역/토지거래허가구역 제외, 이 요건을 모두 충족합니까?', def:'n'}
     ],
@@ -417,6 +452,7 @@ const TYPE_CONFIGS = {
   },
   etc: {
     label: '그 밖의 토지 (나대지·잡종지)',
+    legalQuery: '비사업용 토지 나대지 잡종지',
     fields: [
       {id:'etc_building', q:'건축 착공 후 정당한 사유 없이 공사가 중단되지 않고 계속 진행 중입니까? (취득일부터 2년 이내 + 착공 이후 건설 중인 기간만 사업용으로 인정)', def:'n'}
     ],
@@ -443,6 +479,8 @@ function onLandTypeChange(){
       </div>
     </div>
   `).join('');
+  const legalQueryEl = document.getElementById('legalQuery');
+  if (legalQueryEl && !legalQueryManuallyEdited) legalQueryEl.value = cfg.legalQuery;
   onTypeFieldChange();
 }
 
@@ -720,6 +758,61 @@ function render(){
   });
   document.getElementById(id).addEventListener('change', render);
 });
+
+// ---- 조세심판원 결정례 / 법원 판례 검색 (Cloudflare Worker 프록시 → 법제처 Open API) ----
+let legalQueryManuallyEdited = false;
+let currentLegalSource = 'ttSpecialDecc';
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const el = document.getElementById('legalQuery');
+  if (el) el.addEventListener('input', ()=>{ legalQueryManuallyEdited = true; });
+});
+
+function setLegalSource(src){
+  currentLegalSource = src;
+  document.getElementById('btn-src-decc').classList.toggle('active', src === 'ttSpecialDecc');
+  document.getElementById('btn-src-prec').classList.toggle('active', src === 'prec');
+}
+
+function setLegalStatus(msg){
+  document.getElementById('legalStatus').textContent = msg;
+}
+
+async function searchLegal(){
+  const query = document.getElementById('legalQuery').value.trim();
+  if (!query){ setLegalStatus('검색어를 입력하세요.'); return; }
+  setLegalStatus('검색 중...');
+  document.getElementById('legalResults').innerHTML = '';
+  try{
+    const res = await fetch(`${SYNC_SERVER}/legal-search?target=${currentLegalSource}&query=${encodeURIComponent(query)}&display=10`);
+    if (!res.ok) throw new Error('요청 실패');
+    const data = await res.json();
+    const root = currentLegalSource === 'ttSpecialDecc' ? data.Decc : data.PrecSearch;
+    if (!root){ setLegalStatus('검색 결과가 없습니다.'); return; }
+    let items = currentLegalSource === 'ttSpecialDecc' ? root.decc : root.prec;
+    if (!items){ setLegalStatus('검색 결과가 없습니다.'); return; }
+    if (!Array.isArray(items)) items = [items];
+    const total = root.totalCnt || items.length;
+    setLegalStatus(`총 ${total}건 중 ${items.length}건 표시`);
+    document.getElementById('legalResults').innerHTML = items.map(it=>{
+      if (currentLegalSource === 'ttSpecialDecc'){
+        const link = 'https://www.law.go.kr' + it['행정심판재결례상세링크'];
+        return `<div class="legalItem">
+          <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
+          <div class="legalMeta">청구번호 ${it['청구번호'] || '-'} · 의결일자 ${it['의결일자'] || '-'} · 조세심판원</div>
+        </div>`;
+      } else {
+        const link = 'https://www.law.go.kr' + it['판례상세링크'];
+        return `<div class="legalItem">
+          <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
+          <div class="legalMeta">사건번호 ${it['사건번호'] || '-'} · 선고일자 ${it['선고일자'] || '-'}</div>
+        </div>`;
+      }
+    }).join('');
+  }catch(e){
+    setLegalStatus('검색 실패: 네트워크 또는 서버 상태를 확인하세요.');
+  }
+}
 
 // ---- 기기 간 동기화 (Cloudflare Worker + KV, PIN 기반) ----
 const SYNC_SERVER = 'https://nonbiz-land-tax-api.yjjn2005.workers.dev';
