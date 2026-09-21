@@ -399,6 +399,18 @@
   <section class="block">
     <div class="blockTitle">조세심판원 결정례·법원 판례 검색</div>
     <div class="card">
+      <div class="field">
+        <label for="legalLandType">토지 유형</label>
+        <select id="legalLandType" onchange="onLegalLandTypeChange()">
+          <option value="farm">농지 (전·답·과수원)</option>
+          <option value="forest">임야</option>
+          <option value="pasture">목장용지</option>
+          <option value="house">주택 부속토지 (정착면적 배율 초과분)</option>
+          <option value="villa">별장 부속토지</option>
+          <option value="etc">그 밖의 토지 (나대지·잡종지)</option>
+        </select>
+        <div class="unit">"직접계산" 탭에서 선택한 토지유형이 기본값으로 연동됩니다 — 여기서 바꾸면 검색어·빠른검색어만 바뀌고 직접계산 탭에는 영향 없음</div>
+      </div>
       <div class="toggle" style="margin-bottom:14px;">
         <button id="btn-src-decc" class="active" onclick="setLegalSource('ttSpecialDecc')">조세심판원 결정례</button>
         <button id="btn-src-prec" onclick="setLegalSource('prec')">법원 판례</button>
@@ -408,7 +420,7 @@
           <input type="text" id="legalQuery" placeholder="예: 비사업용 토지 재촌자경">
           <button class="syncBtn" onclick="searchLegal()" style="width:100%;">검색</button>
         </div>
-        <div class="unit">"직접계산" 탭에서 선택한 토지유형에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
+        <div class="unit">위 토지유형에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
       </div>
       <div class="field" style="margin-bottom:0;">
         <label style="margin-bottom:8px;">자주 찾는 검색어</label>
@@ -665,6 +677,8 @@ function onLandTypeChange(){
   `).join('');
   const legalQueryEl = document.getElementById('legalQuery');
   if (legalQueryEl && !legalQueryManuallyEdited) legalQueryEl.value = cfg.legalQuery;
+  const legalLandTypeEl = document.getElementById('legalLandType');
+  if (legalLandTypeEl && !legalQueryManuallyEdited) legalLandTypeEl.value = type;
   renderLegalChips(type);
   onTypeFieldChange();
 }
@@ -1087,6 +1101,14 @@ function useChip(q){
   document.getElementById('legalQuery').value = q;
   legalQueryManuallyEdited = true;
   searchLegal();
+}
+
+function onLegalLandTypeChange(){
+  const type = document.getElementById('legalLandType').value;
+  const cfg = TYPE_CONFIGS[type];
+  document.getElementById('legalQuery').value = cfg.legalQuery;
+  legalQueryManuallyEdited = true; // 이 탭에서 직접 유형을 골랐으므로 이후 직접계산 탭의 자동동기화는 멈춤
+  renderLegalChips(type);
 }
 
 // ---- 지목별 근거자료 탭 ----
