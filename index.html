@@ -194,6 +194,21 @@
   .tabbtn:hover{color:var(--soil-900);}
   .tabbtn.active{color:var(--accent-deep);border-bottom-color:var(--accent-deep);}
   .tabpanel{margin-top:0;}
+
+  .ownerRow{
+    display:grid;grid-template-columns:1fr 110px;gap:10px;
+    margin-bottom:10px;align-items:end;
+  }
+  .ownerRow label{margin-bottom:6px;}
+  .ownerShareWarn{color:var(--danger);}
+  .ownerShareOk{color:var(--ok);}
+
+  .ownerTable{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px;}
+  .ownerTable th,.ownerTable td{padding:9px 10px;text-align:right;border-bottom:1px solid #4a4030;}
+  .ownerTable th:first-child,.ownerTable td:first-child{text-align:left;}
+  .ownerTable thead th{color:#c9bfa8;font-weight:600;font-size:12px;}
+  .ownerTable tbody td{color:var(--wheat-100);}
+  .ownerTable tfoot td{font-weight:700;color:#f0d9a8;border-top:1px solid #6b5f47;border-bottom:none;}
 </style>
 </head>
 <body>
@@ -303,6 +318,29 @@
         <div class="unit">원</div>
       </div>
     </div>
+
+    <div class="card">
+      <h3>공동 지분 정보 (선택)</h3>
+      <div class="field">
+        <label class="chk" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="jointOn" onchange="onJointToggle()" style="width:auto;">
+          공동명의(지분 소유)입니다 — 최대 5명까지 인별로 양도세를 각각 계산합니다
+        </label>
+      </div>
+      <div id="jointFields" style="display:none;">
+        <div class="field">
+          <label for="ownerCount">공유자 수</label>
+          <select id="ownerCount" onchange="onOwnerCountChange()">
+            <option value="2">2명</option>
+            <option value="3">3명</option>
+            <option value="4">4명</option>
+            <option value="5">5명</option>
+          </select>
+        </div>
+        <div id="ownerRows"></div>
+        <div id="ownerShareTotal" style="font-size:13px;margin-top:8px;"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ===================== STEP 3: 세율 시점 (비사업용일 때만 의미) ===================== -->
@@ -323,6 +361,9 @@
     <div class="headline" id="headlineTax">0<span>원</span></div>
     <div class="subline" id="headlineSub"></div>
     <div class="breakdown" id="breakdown"></div>
+    <div id="ownerBreakdownWrap" style="display:none;">
+      <table class="ownerTable" id="ownerTable"></table>
+    </div>
     <div class="shortNote" id="shortNote" style="display:none;"></div>
   </div>
 
@@ -625,10 +666,12 @@ function ltcgRate(wholeYears, allowed){
   return Math.min(0.30, wholeYears * 0.02);
 }
 
-function computeFor(isBiz, surcharge, ltcgAllowedIfNonBiz, inputs, wholeYears){
+function computeFor(isBiz, surcharge, ltcgAllowedIfNonBiz, inputs, wholeYears, share){
   // isBiz=true → surcharge 0, 장특공 정상 적용(항상 허용)
   // isBiz=false → surcharge 적용, 장특공은 ltcgAllowedIfNonBiz 여부에 따름
-  const gainRaw = inputs.transfer - inputs.acquire - inputs.expense;
+  // share: 해당 공유자의 지분율(0~1). 미지정 시 1(단독소유)
+  if (share === undefined) share = 1;
+  const gainRaw = (inputs.transfer - inputs.acquire - inputs.expense) * share;
   const gain = Math.max(0, gainRaw);
   const effSurcharge = isBiz ? 0 : surcharge;
   const effLtcgAllowed = isBiz ? true : ltcgAllowedIfNonBiz;
@@ -643,15 +686,77 @@ function computeFor(isBiz, surcharge, ltcgAllowedIfNonBiz, inputs, wholeYears){
   return {gain, deductRate, ltcgDeduct, afterLtcg, basicDeduct, taxBase, nationalTax, localTax, totalTax};
 }
 
-function flatRateTax(inputs, ratePct){
-  // 단기보유 특례: 양도차익-장특공(없음)-기본공제 후 단일세율
-  const gainRaw = inputs.transfer - inputs.acquire - inputs.expense;
+function flatRateTax(inputs, ratePct, share){
+  // 단기보유 특례: 양도차익-장특공(없음)-기본공제 후 단일세율 (지분별)
+  if (share === undefined) share = 1;
+  const gainRaw = (inputs.transfer - inputs.acquire - inputs.expense) * share;
   const gain = Math.max(0, gainRaw);
   const taxBase = Math.max(0, gain - 2500000);
   const nationalTax = taxBase * ratePct;
   const localTax = nationalTax * 0.10;
   return nationalTax + localTax;
 }
+
+// ---- 공동 지분 ----
+function onJointToggle(){
+  const on = document.getElementById('jointOn').checked;
+  document.getElementById('jointFields').style.display = on ? 'block' : 'none';
+  if (on) onOwnerCountChange(); else render();
+}
+
+function onOwnerCountChange(){
+  const count = Number(document.getElementById('ownerCount').value) || 2;
+  const base = Math.floor((100/count) * 100) / 100;
+  const rowsHtml = [];
+  for (let i=1; i<=count; i++){
+    const defaultShare = (i < count) ? base : Math.round((100 - base*(count-1)) * 100) / 100;
+    rowsHtml.push(`
+      <div class="ownerRow">
+        <div class="field" style="margin-bottom:0;">
+          <label>공유자 ${i} 성명(선택)</label>
+          <input type="text" id="owner_name_${i}" placeholder="공유자${i}" oninput="render()">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>지분율(%)</label>
+          <input type="number" id="owner_share_${i}" value="${defaultShare}" min="0" max="100" step="0.01" oninput="updateOwnerShareTotal(); render();">
+        </div>
+      </div>
+    `);
+  }
+  document.getElementById('ownerRows').innerHTML = rowsHtml.join('');
+  updateOwnerShareTotal();
+  render();
+}
+
+function updateOwnerShareTotal(){
+  const count = Number(document.getElementById('ownerCount').value) || 2;
+  let sum = 0;
+  for (let i=1; i<=count; i++){
+    const el = document.getElementById('owner_share_'+i);
+    if (el) sum += Number(el.value) || 0;
+  }
+  const diff = Math.round((sum - 100) * 100) / 100;
+  const el = document.getElementById('ownerShareTotal');
+  el.innerHTML = (Math.abs(diff) < 0.01)
+    ? `<span class="ownerShareOk">지분 합계 ${sum.toFixed(2)}% — 정상</span>`
+    : `<span class="ownerShareWarn">지분 합계 ${sum.toFixed(2)}% — 100%가 되도록 조정하세요</span>`;
+}
+
+function getOwners(){
+  const jointOn = document.getElementById('jointOn').checked;
+  if (!jointOn) return [{name:'', share:1}];
+  const count = Number(document.getElementById('ownerCount').value) || 2;
+  const owners = [];
+  for (let i=1; i<=count; i++){
+    const nameEl = document.getElementById('owner_name_'+i);
+    const shareEl = document.getElementById('owner_share_'+i);
+    const name = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : ('공유자'+i);
+    const share = shareEl ? (Number(shareEl.value) || 0) / 100 : 0;
+    owners.push({name, share});
+  }
+  return owners;
+}
+
 
 function getInputs(){
   return {
@@ -712,54 +817,100 @@ function render(){
         <td class="${t.pass?'pass':'fail'}">${t.pass?'충족':'미충족'}</td>
       </tr>`).join('');
 
-  // ---- 2) 세액 계산 ----
+  // ---- 2) 세액 계산 (지분별) ----
   const modeInfo = MODE_INFO[currentMode];
   document.getElementById('modeInfo').textContent = modeInfo.label;
 
-  const active = computeFor(finalIsBiz, modeInfo.surcharge, true, inputs, wholeYears);
+  const owners = getOwners();
+  const jointOn = document.getElementById('jointOn').checked;
 
-  // 단기보유 특례 비교
-  let shortNoteHtml = '';
-  let finalTotal = active.totalTax;
-  if (wholeYears < 2){
-    const flatRate = wholeYears < 1 ? 0.50 : 0.40;
-    const flatTax = flatRateTax(inputs, flatRate);
-    if (flatTax > active.totalTax){
-      finalTotal = flatTax;
-      shortNoteHtml = `단기보유 특례: 소유기간 ${wholeYears<1?'1년 미만(50%)':'2년 미만(40%)'} 단일세율 적용 세액 ${won(flatTax)}원이 위 계산 세액보다 커서, 더 큰 금액인 <b>${won(flatTax)}원</b>이 최종 적용됩니다.`;
-    } else {
-      shortNoteHtml = `단기보유 특례(${wholeYears<1?'1년 미만 50%':'2년 미만 40%'} 단일세율 적용 시 ${won(flatTax)}원)와 비교했으나, 위 계산 세액이 더 커 그대로 적용됩니다.`;
+  const ownerResults = owners.map(o => {
+    const calc = computeFor(finalIsBiz, modeInfo.surcharge, true, inputs, wholeYears, o.share);
+    let ownerFinal = calc.totalTax;
+    let flatApplied = false;
+    let flatTax = 0;
+    if (wholeYears < 2){
+      const flatRatePct = wholeYears < 1 ? 0.50 : 0.40;
+      flatTax = flatRateTax(inputs, flatRatePct, o.share);
+      if (flatTax > calc.totalTax){ ownerFinal = flatTax; flatApplied = true; }
     }
+    return {...o, calc, ownerFinal, flatApplied, flatTax};
+  });
+
+  const aggGain = ownerResults.reduce((s,o)=>s+o.calc.gain,0);
+  const aggLtcgDeduct = ownerResults.reduce((s,o)=>s+o.calc.ltcgDeduct,0);
+  const aggAfterLtcg = ownerResults.reduce((s,o)=>s+o.calc.afterLtcg,0);
+  const aggBasicDeduct = ownerResults.reduce((s,o)=>s+o.calc.basicDeduct,0);
+  const aggTaxBase = ownerResults.reduce((s,o)=>s+o.calc.taxBase,0);
+  const aggNationalTax = ownerResults.reduce((s,o)=>s+o.calc.nationalTax,0);
+  const aggLocalTax = ownerResults.reduce((s,o)=>s+o.calc.localTax,0);
+  const finalTotal = ownerResults.reduce((s,o)=>s+o.ownerFinal,0);
+  const deductRate = ownerResults.length ? ownerResults[0].calc.deductRate : 0;
+
+  // 단기보유 특례 안내(전체 합산 기준 메시지)
+  let shortNoteHtml = '';
+  if (wholeYears < 2){
+    const anyFlat = ownerResults.some(o=>o.flatApplied);
+    const flatSum = ownerResults.reduce((s,o)=>s+(o.flatApplied?o.flatTax:o.calc.totalTax),0);
+    shortNoteHtml = anyFlat
+      ? `단기보유 특례: 소유기간 ${wholeYears<1?'1년 미만(50%)':'2년 미만(40%)'} 단일세율이 일부(또는 전체) 공유자에게 더 유리하게 적용되어, 최종 합계는 <b>${won(finalTotal)}원</b>입니다.`
+      : `단기보유 특례(${wholeYears<1?'1년 미만 50%':'2년 미만 40%'} 단일세율)와 비교했으나, 인별 누진세액이 더 커 그대로 적용됩니다.`;
   }
   document.getElementById('shortNote').style.display = shortNoteHtml ? 'block' : 'none';
   document.getElementById('shortNote').innerHTML = shortNoteHtml;
 
   document.getElementById('headlineTax').innerHTML = won(finalTotal) + '<span>원</span>';
-  document.getElementById('headlineSub').textContent = finalIsBiz ? '비사업용 토지 중과세율 적용' : '사업용 토지 — 일반세율 적용(가산 없음)';
+  document.getElementById('headlineSub').textContent =
+    (finalIsBiz ? '비사업용 토지 중과세율 적용' : '사업용 토지 — 일반세율 적용(가산 없음)') +
+    (jointOn ? ` · 공유자 ${owners.length}명 인별 합산` : '');
 
   document.getElementById('breakdown').innerHTML = `
-    <div class="brow"><span class="k">양도차익 (양도가액 − 취득가액 − 필요경비)</span><span class="v">${won(active.gain)}원</span></div>
-    <div class="brow sub"><span class="k">장기보유특별공제 (${(active.deductRate*100).toFixed(0)}%)</span><span class="v">-${won(active.ltcgDeduct)}원</span></div>
-    <div class="brow"><span class="k">양도소득금액</span><span class="v">${won(active.afterLtcg)}원</span></div>
-    <div class="brow sub"><span class="k">양도소득 기본공제</span><span class="v">-${won(active.basicDeduct)}원</span></div>
-    <div class="brow"><span class="k">과세표준</span><span class="v">${won(active.taxBase)}원</span></div>
-    <div class="brow"><span class="k">양도소득세 (산출세액)</span><span class="v">${won(active.nationalTax)}원</span></div>
-    <div class="brow"><span class="k">지방소득세 (10%)</span><span class="v">${won(active.localTax)}원</span></div>
+    <div class="brow"><span class="k">양도차익 합계 (양도가액 − 취득가액 − 필요경비)</span><span class="v">${won(aggGain)}원</span></div>
+    <div class="brow sub"><span class="k">장기보유특별공제 (${(deductRate*100).toFixed(0)}%)</span><span class="v">-${won(aggLtcgDeduct)}원</span></div>
+    <div class="brow"><span class="k">양도소득금액 합계</span><span class="v">${won(aggAfterLtcg)}원</span></div>
+    <div class="brow sub"><span class="k">양도소득 기본공제 (인별 250만원${jointOn?' × '+owners.length+'명':''})</span><span class="v">-${won(aggBasicDeduct)}원</span></div>
+    <div class="brow"><span class="k">과세표준 합계</span><span class="v">${won(aggTaxBase)}원</span></div>
+    <div class="brow"><span class="k">양도소득세 합계 (인별 산출세액의 합)</span><span class="v">${won(aggNationalTax)}원</span></div>
+    <div class="brow"><span class="k">지방소득세 합계 (10%)</span><span class="v">${won(aggLocalTax)}원</span></div>
     <div class="brow total"><span class="k">총 납부세액</span><span class="v">${won(finalTotal)}원</span></div>
   `;
 
-  // 비교표는 "비사업용으로 판정될 경우"를 가정해 현행/2028 비교 (판정 참고용)
-  const nowCalc = computeFor(false, MODE_INFO.now.surcharge, true, inputs, wholeYears);
-  const futureCalc = computeFor(false, MODE_INFO.future.surcharge, false, inputs, wholeYears);
+  // 인별 세액표 (공동명의인 경우에만 표시)
+  const ownerWrap = document.getElementById('ownerBreakdownWrap');
+  if (jointOn && owners.length > 1){
+    ownerWrap.style.display = 'block';
+    document.getElementById('ownerTable').innerHTML = `
+      <thead><tr><th>공유자</th><th>지분율</th><th>양도차익</th><th>과세표준</th><th>산출세액(지방세 포함)</th></tr></thead>
+      <tbody>
+        ${ownerResults.map(o=>`
+          <tr>
+            <td>${o.name}${o.flatApplied?' <span style="font-size:11px;color:#f0d9a8;">(단기특례)</span>':''}</td>
+            <td>${(o.share*100).toFixed(2)}%</td>
+            <td>${won(o.calc.gain)}원</td>
+            <td>${won(o.calc.taxBase)}원</td>
+            <td>${won(o.ownerFinal)}원</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="4">합계</td><td>${won(finalTotal)}원</td></tr></tfoot>
+    `;
+  } else {
+    ownerWrap.style.display = 'none';
+  }
+
+  // 비교표는 "비사업용으로 판정될 경우"를 가정해 현행/2028 비교 (판정 참고용, 지분 합산 기준)
+  const nowSum = owners.reduce((s,o)=>s+computeFor(false, MODE_INFO.now.surcharge, true, inputs, wholeYears, o.share).totalTax, 0);
+  const futureSum = owners.reduce((s,o)=>s+computeFor(false, MODE_INFO.future.surcharge, false, inputs, wholeYears, o.share).totalTax, 0);
+  const nowDeductRate = ltcgRate(wholeYears, true);
   document.getElementById('compareBox').style.opacity = finalIsBiz ? '1' : '0.55';
   document.getElementById('cmpNowRate').textContent = '60.5%';
-  document.getElementById('cmpNowDeduct').textContent = (nowCalc.deductRate*100).toFixed(0) + '%';
-  document.getElementById('cmpNowTax').textContent = won(nowCalc.totalTax) + '원';
+  document.getElementById('cmpNowDeduct').textContent = (nowDeductRate*100).toFixed(0) + '%';
+  document.getElementById('cmpNowTax').textContent = won(nowSum) + '원';
   document.getElementById('cmpFutureRate').textContent = '71.5%';
   document.getElementById('cmpFutureDeduct').textContent = '0%';
-  document.getElementById('cmpFutureTax').textContent = won(futureCalc.totalTax) + '원';
-  const diff = futureCalc.totalTax - nowCalc.totalTax;
-  const diffPct = nowCalc.totalTax > 0 ? (diff / nowCalc.totalTax * 100).toFixed(1) : '0.0';
+  document.getElementById('cmpFutureTax').textContent = won(futureSum) + '원';
+  const diff = futureSum - nowSum;
+  const diffPct = nowSum > 0 ? (diff / nowSum * 100).toFixed(1) : '0.0';
   document.getElementById('diffLine').innerHTML =
     (finalIsBiz ? '' : '<i>※ 현재 사업용으로 판정되어 아래 비교는 참고용입니다.</i><br>') +
     (diff >= 0
@@ -870,6 +1021,9 @@ async function saveToCloud(){
     typeFieldValues: getTypeFieldValues(),
     overrideOn: document.getElementById('overrideOn').checked,
     overrideValue: document.getElementById('overrideValue').value,
+    jointOn: document.getElementById('jointOn').checked,
+    ownerCount: document.getElementById('ownerCount').value,
+    owners: getOwners().map(o=>({name:o.name, sharePct: o.share*100})),
     savedAt: new Date().toISOString()
   };
   try{
@@ -909,6 +1063,24 @@ async function loadFromCloud(){
     if (data.bizYears !== undefined){ document.getElementById('bizYears').value = data.bizYears; bizYearsManuallyEdited = true; }
     if (data.overrideOn !== undefined) document.getElementById('overrideOn').checked = data.overrideOn;
     if (data.overrideValue) document.getElementById('overrideValue').value = data.overrideValue;
+    if (data.jointOn !== undefined){
+      document.getElementById('jointOn').checked = data.jointOn;
+      document.getElementById('jointFields').style.display = data.jointOn ? 'block' : 'none';
+      if (data.jointOn && data.ownerCount){
+        document.getElementById('ownerCount').value = data.ownerCount;
+        onOwnerCountChange();
+        if (Array.isArray(data.owners)){
+          data.owners.forEach((o,idx)=>{
+            const i = idx+1;
+            const nameEl = document.getElementById('owner_name_'+i);
+            const shareEl = document.getElementById('owner_share_'+i);
+            if (nameEl && o.name) nameEl.value = o.name;
+            if (shareEl && o.sharePct !== undefined) shareEl.value = o.sharePct;
+          });
+          updateOwnerShareTotal();
+        }
+      }
+    }
     if (data.mode) setMode(data.mode); else render();
     setSyncStatus('불러오기 완료.', 'ok');
   }catch(e){
