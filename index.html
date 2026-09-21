@@ -181,6 +181,19 @@
   }
   .legalItem a:hover{color:var(--accent-deep);text-decoration:underline;}
   .legalMeta{font-size:12px;color:var(--soil-500);margin-top:3px;}
+
+  .tabnav{
+    display:flex;gap:6px;margin-top:24px;border-bottom:2px solid var(--line);
+  }
+  .tabbtn{
+    padding:11px 18px;border:none;background:transparent;
+    font-size:14.5px;font-weight:600;color:var(--soil-500);
+    cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;
+    margin-bottom:-2px;
+  }
+  .tabbtn:hover{color:var(--soil-900);}
+  .tabbtn.active{color:var(--accent-deep);border-bottom-color:var(--accent-deep);}
+  .tabpanel{margin-top:0;}
 </style>
 </head>
 <body>
@@ -194,6 +207,13 @@
     </div>
   </header>
 
+  <nav class="tabnav">
+    <button class="tabbtn active" data-tab="calc" onclick="switchTab('calc')">직접계산</button>
+    <button class="tabbtn" data-tab="legal" onclick="switchTab('legal')">조세심판원 판례검색</button>
+    <button class="tabbtn" data-tab="sync" onclick="switchTab('sync')">기기간 동기화</button>
+  </nav>
+
+  <div class="tabpanel" id="tab-calc">
   <!-- ===================== STEP 1: 판정 ===================== -->
   <section class="block">
     <div class="blockTitle"><span class="stepnum">1</span>사업용 / 비사업용 판정</div>
@@ -322,10 +342,12 @@
     </table>
     <div class="diff" id="diffLine"></div>
   </div>
+  </div><!-- /tab-calc -->
 
-  <!-- ===================== STEP 4: 판례·심판례 검색 ===================== -->
+  <div class="tabpanel" id="tab-legal" style="display:none;">
+  <!-- ===================== 판례·심판례 검색 ===================== -->
   <section class="block">
-    <div class="blockTitle"><span class="stepnum">4</span>관련 조세심판원 결정례·법원 판례</div>
+    <div class="blockTitle">조세심판원 결정례·법원 판례 검색</div>
     <div class="card">
       <div class="toggle" style="margin-bottom:14px;">
         <button id="btn-src-decc" class="active" onclick="setLegalSource('ttSpecialDecc')">조세심판원 결정례</button>
@@ -336,13 +358,15 @@
           <input type="text" id="legalQuery" placeholder="예: 비사업용 토지 재촌자경">
           <button class="syncBtn" onclick="searchLegal()" style="width:100%;">검색</button>
         </div>
-        <div class="unit">위 판정 내용(토지유형)에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
+        <div class="unit">"직접계산" 탭에서 선택한 토지유형에 맞춰 검색어가 자동 제안됩니다 — 직접 수정 가능</div>
       </div>
       <div id="legalStatus" style="font-size:12.5px;color:var(--soil-500);margin-top:4px;"></div>
       <div id="legalResults" style="margin-top:12px;"></div>
     </div>
   </section>
+  </div><!-- /tab-legal -->
 
+  <div class="tabpanel" id="tab-sync" style="display:none;">
   <div class="sync">
     <h3>기기 간 동기화</h3>
     <div class="syncRow">
@@ -355,6 +379,7 @@
     </div>
     <div class="syncStatus" id="syncStatus"></div>
   </div>
+  </div><!-- /tab-sync -->
 
   <details class="basis">
     <summary>판정·계산 근거</summary>
@@ -758,6 +783,14 @@ function render(){
   });
   document.getElementById(id).addEventListener('change', render);
 });
+
+// ---- 탭 전환 ----
+function switchTab(name){
+  ['calc','legal','sync'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
+    document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
+  });
+}
 
 // ---- 조세심판원 결정례 / 법원 판례 검색 (Cloudflare Worker 프록시 → 법제처 Open API) ----
 let legalQueryManuallyEdited = false;

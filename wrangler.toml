@@ -1,7 +1,8 @@
 name = "nonbiz-land-tax-api"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+account_id = "5e0ee93027dfd536070f5e5f08c90d01"
 
 [[kv_namespaces]]
 binding = "NONBIZ_LAND_TAX_SYNC"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "7cdf3917fbec43dea50aa67fd62e8534"
