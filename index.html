@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>비사업용토지 양도세 계산기</title>
+<title>비사업용토지 판정·양도세 계산기</title>
 <style>
   :root{
     --soil-900:#2b241c;
@@ -26,307 +26,287 @@
     color:var(--soil-900);
     line-height:1.55;
   }
-  .wrap{max-width:920px;margin:0 auto;padding:36px 20px 80px;}
+  .wrap{max-width:960px;margin:0 auto;padding:36px 20px 80px;}
   header{margin-bottom:28px;}
-  .eyebrow{
-    font-size:13px;
-    color:var(--accent-deep);
-    letter-spacing:.02em;
-    margin-bottom:6px;
-  }
-  h1{
-    font-size:28px;
-    margin:0 0 10px;
-    font-weight:700;
-    letter-spacing:-0.01em;
-  }
-  .lede{
-    font-size:15px;
-    color:var(--soil-500);
-    max-width:60ch;
-  }
+  .eyebrow{font-size:13px;color:var(--accent-deep);letter-spacing:.02em;margin-bottom:6px;}
+  h1{font-size:27px;margin:0 0 10px;font-weight:700;letter-spacing:-0.01em;}
+  .lede{font-size:15px;color:var(--soil-500);max-width:64ch;}
   .notice{
-    margin-top:16px;
-    padding:14px 16px;
-    background:#f4ece0;
-    border:1px solid var(--line);
-    border-radius:6px;
-    font-size:13.5px;
-    color:var(--soil-700);
+    margin-top:16px;padding:14px 16px;background:#f4ece0;
+    border:1px solid var(--line);border-radius:6px;
+    font-size:13.5px;color:var(--soil-700);
   }
   .notice b{color:var(--accent-deep);}
 
-  .grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:18px;
-    margin-top:30px;
+  .stepnum{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--accent-deep);color:#fff;font-size:12px;font-weight:700;
+    margin-right:8px;flex-shrink:0;
   }
-  @media (max-width:640px){ .grid{grid-template-columns:1fr;} }
+  section.block{margin-top:26px;}
+  .blockTitle{
+    display:flex;align-items:center;font-size:17px;font-weight:700;
+    margin-bottom:14px;color:var(--soil-900);
+  }
 
   .card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:22px 22px 24px;
+    background:var(--card);border:1px solid var(--line);
+    border-radius:8px;padding:22px 22px 24px;
   }
-  .card h2{
-    font-size:15px;
-    margin:0 0 16px;
-    color:var(--accent-deep);
-    font-weight:700;
-    border-bottom:1px solid var(--line);
-    padding-bottom:10px;
+  .card + .card{margin-top:14px;}
+  .card h3{
+    font-size:14px;margin:0 0 14px;color:var(--accent-deep);font-weight:700;
+    border-bottom:1px solid var(--line);padding-bottom:9px;
   }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:640px){ .grid2{grid-template-columns:1fr;} }
+
   .field{margin-bottom:16px;}
   .field:last-child{margin-bottom:0;}
-  label{
-    display:block;
-    font-size:13px;
-    color:var(--soil-500);
-    margin-bottom:6px;
+  label{display:block;font-size:13px;color:var(--soil-500);margin-bottom:6px;}
+  input[type=number], input[type=text], select{
+    width:100%;padding:10px 12px;font-size:15px;
+    border:1px solid var(--line);border-radius:5px;
+    background:var(--wheat-50);color:var(--soil-900);font-family:inherit;
   }
-  input[type=number], input[type=date], select{
-    width:100%;
-    padding:10px 12px;
-    font-size:15px;
-    border:1px solid var(--line);
-    border-radius:5px;
-    background:var(--wheat-50);
-    color:var(--soil-900);
-    font-family:inherit;
-  }
-  input:focus, select:focus{
-    outline:none;
-    border-color:var(--accent);
-    background:#fff;
-  }
+  input:focus, select:focus{outline:none;border-color:var(--accent);background:#fff;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .unit{font-size:12px;color:var(--soil-500);margin-top:4px;}
 
-  .toggle{
-    display:flex;
-    border:1px solid var(--line);
-    border-radius:6px;
-    overflow:hidden;
+  .yn{display:flex;gap:10px;}
+  .yn label{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:9px 8px;border:1px solid var(--line);border-radius:5px;
+    background:var(--wheat-50);font-size:13.5px;cursor:pointer;color:var(--soil-700);
+    margin-bottom:0;
   }
+  .yn input{width:auto;margin:0;}
+  .yn label.checked{background:var(--accent-deep);color:#fff;border-color:var(--accent-deep);}
+
+  .toggle{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
   .toggle button{
-    flex:1;
-    padding:11px 8px;
-    border:none;
-    background:var(--wheat-50);
-    color:var(--soil-500);
-    font-size:13.5px;
-    cursor:pointer;
-    font-family:inherit;
-    font-weight:600;
+    flex:1;padding:11px 8px;border:none;background:var(--wheat-50);
+    color:var(--soil-500);font-size:13.5px;cursor:pointer;font-family:inherit;font-weight:600;
   }
-  .toggle button.active{
-    background:var(--accent-deep);
-    color:#fff;
-  }
+  .toggle button.active{background:var(--accent-deep);color:#fff;}
   .toggle button:first-child{border-right:1px solid var(--line);}
 
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 16px;border-radius:20px;font-weight:700;font-size:14.5px;
+  }
+  .badge.biz{background:#e3ede4;color:var(--ok);}
+  .badge.nonbiz{background:#f3e2dd;color:var(--danger);}
+  .verdictBox{
+    margin-top:16px;padding:16px 18px;border-radius:8px;
+    background:var(--wheat-50);border:1px solid var(--line);
+  }
+  .verdictReason{margin-top:10px;font-size:13px;color:var(--soil-700);}
+  .verdictReason ul{margin:6px 0 0;padding-left:18px;}
+  .verdictReason li{margin-bottom:4px;}
+
+  .testTable{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+  .testTable th,.testTable td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);}
+  .testTable th{color:var(--soil-500);font-weight:600;font-size:12px;}
+  .testTable td.pass{color:var(--ok);font-weight:700;}
+  .testTable td.fail{color:var(--danger);font-weight:700;}
+
   .result{
-    margin-top:22px;
-    background:var(--soil-900);
-    color:var(--wheat-100);
-    border-radius:10px;
-    padding:26px 26px 22px;
+    margin-top:22px;background:var(--soil-900);color:var(--wheat-100);
+    border-radius:10px;padding:26px 26px 22px;
   }
   .result .label{font-size:13px;color:#c9bfa8;margin-bottom:4px;}
-  .result .headline{
-    font-size:34px;
-    font-weight:700;
-    letter-spacing:-0.01em;
-  }
+  .result .headline{font-size:34px;font-weight:700;letter-spacing:-0.01em;}
   .result .headline span{font-size:16px;font-weight:500;color:#c9bfa8;margin-left:4px;}
-  .breakdown{
-    margin-top:20px;
-    border-top:1px solid #4a4030;
-    padding-top:16px;
-  }
-  .brow{
-    display:flex;
-    justify-content:space-between;
-    padding:7px 0;
-    font-size:14px;
-    border-bottom:1px dashed #4a4030;
-  }
+  .result .subline{margin-top:6px;font-size:13px;color:#c9bfa8;}
+  .breakdown{margin-top:20px;border-top:1px solid #4a4030;padding-top:16px;}
+  .brow{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;border-bottom:1px dashed #4a4030;}
   .brow:last-child{border-bottom:none;}
   .brow .k{color:#c9bfa8;}
   .brow .v{font-weight:600;font-variant-numeric:tabular-nums;}
   .brow.sub .v{color:#e8ddc7;}
-  .brow.total{
-    margin-top:6px;
-    padding-top:14px;
-    border-top:1px solid #6b5f47;
-    border-bottom:none;
-  }
+  .brow.total{margin-top:6px;padding-top:14px;border-top:1px solid #6b5f47;border-bottom:none;}
   .brow.total .k{color:#fff;font-weight:700;font-size:15px;}
   .brow.total .v{font-size:19px;color:#f0d9a8;}
 
-  .compare{
-    margin-top:18px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:8px;
-    overflow:hidden;
+  .shortNote{
+    margin-top:14px;padding:12px 14px;background:#3f3527;border-radius:6px;
+    font-size:13px;color:#f0d9a8;
   }
+
+  .compare{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
   th,td{padding:11px 14px;text-align:right;}
   th:first-child,td:first-child{text-align:left;}
-  thead th{
-    background:var(--wheat-100);
-    color:var(--soil-500);
-    font-weight:600;
-    font-size:12.5px;
-    border-bottom:1px solid var(--line);
-  }
+  thead th{background:var(--wheat-100);color:var(--soil-500);font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line);}
   tbody tr:not(:last-child) td{border-bottom:1px solid var(--wheat-100);}
   tbody tr.now td{color:var(--soil-700);}
   tbody tr.future td{color:var(--danger);font-weight:600;}
-  .diff{
-    padding:14px 14px 16px;
-    font-size:13.5px;
-    color:var(--soil-700);
-    border-top:1px solid var(--line);
-    background:var(--wheat-50);
-  }
+  .diff{padding:14px 14px 16px;font-size:13.5px;color:var(--soil-700);border-top:1px solid var(--line);background:var(--wheat-50);}
   .diff b{color:var(--danger);}
 
-  footer{
-    margin-top:34px;
-    font-size:12px;
-    color:var(--soil-500);
-    border-top:1px solid var(--line);
-    padding-top:16px;
-  }
-  footer a{color:var(--accent-deep);}
-  .basis{
-    margin-top:10px;
-    font-size:12px;
-    color:var(--soil-500);
-  }
-  .basis summary{cursor:pointer;color:var(--accent-deep);font-weight:600;margin-bottom:8px;}
-  .basis ul{margin:6px 0 0;padding-left:18px;}
-  .basis li{margin-bottom:5px;}
-
-  .sync{
-    margin-top:18px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:20px 22px 22px;
-  }
-  .sync h2{
-    font-size:15px;margin:0 0 14px;color:var(--accent-deep);font-weight:700;
-    border-bottom:1px solid var(--line);padding-bottom:10px;
-  }
+  .sync{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px 22px 22px;}
+  .sync h3{font-size:14px;margin:0 0 14px;color:var(--accent-deep);font-weight:700;border-bottom:1px solid var(--line);padding-bottom:9px;}
   .syncRow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
   .syncField{flex:1;min-width:140px;}
   .syncField label{font-size:12.5px;color:var(--soil-500);margin-bottom:6px;display:block;}
-  .syncField input{
-    width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--line);
-    border-radius:5px;background:var(--wheat-50);font-family:inherit;
-  }
-  .syncBtn{
-    padding:10px 16px;border:1px solid var(--accent-deep);border-radius:5px;
-    background:var(--accent-deep);color:#fff;font-size:13.5px;font-weight:600;
-    cursor:pointer;font-family:inherit;white-space:nowrap;
-  }
+  .syncField input{width:100%;padding:9px 11px;font-size:14px;border:1px solid var(--line);border-radius:5px;background:var(--wheat-50);font-family:inherit;}
+  .syncBtn{padding:10px 16px;border:1px solid var(--accent-deep);border-radius:5px;background:var(--accent-deep);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
   .syncBtn.ghost{background:#fff;color:var(--accent-deep);}
   .syncStatus{margin-top:10px;font-size:12.5px;color:var(--soil-500);min-height:16px;}
   .syncStatus.ok{color:var(--ok);}
   .syncStatus.err{color:var(--danger);}
+
+  footer{margin-top:34px;font-size:12px;color:var(--soil-500);border-top:1px solid var(--line);padding-top:16px;}
+  .basis{margin-top:10px;font-size:12px;color:var(--soil-500);}
+  .basis summary{cursor:pointer;color:var(--accent-deep);font-weight:600;margin-bottom:8px;}
+  .basis ul{margin:6px 0 0;padding-left:18px;}
+  .basis li{margin-bottom:5px;}
+
+  .override{
+    margin-top:14px;padding:12px 14px;background:var(--wheat-50);
+    border:1px dashed var(--line);border-radius:6px;font-size:13px;
+  }
+  .override label.chk{display:flex;align-items:center;gap:8px;margin-bottom:0;color:var(--soil-700);cursor:pointer;}
+  .override input[type=checkbox]{width:auto;}
+  .override select{margin-top:8px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">토지 양도소득세 · 비사업용 토지</div>
-    <h1>비사업용토지 양도세 계산기</h1>
-    <p class="lede">개인이 소유한 비사업용 토지(부재지주 농지·임야·나대지 등)를 양도할 때의 양도소득세를 계산합니다. 2026년 세제개편안에 따른 2028년 이후 강화 세율과 현행 세율을 함께 비교합니다.</p>
+    <div class="eyebrow">토지 양도소득세 · 비사업용 토지 판정</div>
+    <h1>비사업용토지 판정·양도세 계산기</h1>
+    <p class="lede">소득세법 제104조의3 및 시행령 제168조의6~168조의13에 따라 해당 토지가 사업용/비사업용 토지 중 어디에 해당하는지 직접 판정한 뒤, 그 결과에 맞는 세율로 양도소득세를 계산합니다.</p>
     <div class="notice">
-      <b>2026년 세제개편안(2026.8.3 재정경제부 발표) 기준 — 아직 국회 심의 전 개정안입니다.</b> 2027년까지는 현행 규정(기본세율+10%p, 장기보유특별공제 최대 30%)이 적용되고, 2028년 1월 1일 이후 양도분부터는 기본세율+20%p·장기보유특별공제 폐지가 예정되어 있습니다. 실제 신고 전 최종 확정 법령(소득세법 제104조·제104조의3)을 다시 확인하세요.
+      <b>2026년 세제개편안(2026.8.3 재정경제부 발표, 국회 심의 전) 반영.</b> 2027년까지는 현행 규정(비사업용 가산세율 +10%p, 장기보유특별공제 최대 30%)이, 2028년 1월 1일 이후 양도분부터는 가산세율 +20%p·장기보유특별공제 폐지가 예정되어 있습니다. 판정 로직은 법령·시행령의 일반 원칙을 반영한 것으로, 부득이한 사유에 따른 예외(수용, 소송 계속, 상속 유예기간 등)는 별도 검토가 필요합니다.
     </div>
   </header>
 
-  <div class="grid">
+  <!-- ===================== STEP 1: 판정 ===================== -->
+  <section class="block">
+    <div class="blockTitle"><span class="stepnum">1</span>사업용 / 비사업용 판정</div>
+
     <div class="card">
-      <h2>양도 정보</h2>
+      <h3>토지 유형</h3>
       <div class="field">
-        <label for="acquire">취득가액</label>
-        <input type="number" id="acquire" value="300000000" min="0" step="1000000">
-        <div class="unit">원</div>
+        <select id="landType" onchange="onLandTypeChange()">
+          <option value="farm">농지 (전·답·과수원)</option>
+          <option value="forest">임야</option>
+          <option value="pasture">목장용지</option>
+          <option value="house">주택 부속토지 (정착면적 배율 초과분)</option>
+          <option value="villa">별장 부속토지</option>
+          <option value="etc">그 밖의 토지 (나대지·잡종지 등)</option>
+        </select>
       </div>
-      <div class="field">
-        <label for="transfer">양도가액</label>
-        <input type="number" id="transfer" value="700000000" min="0" step="1000000">
-        <div class="unit">원</div>
+      <div id="typeFields"></div>
+      <div class="field" style="margin-top:6px;">
+        <div id="categoryNote" style="font-size:12.5px;color:var(--soil-500);"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>보유 · 사용 기간</h3>
+      <div class="grid2">
+        <div class="field">
+          <label for="years">전체 소유기간</label>
+          <div class="row2">
+            <input type="number" id="years" value="12" min="0" max="70" step="1">
+            <select id="months">
+              <option value="0" selected>0개월</option>
+              <option value="1">1개월</option><option value="2">2개월</option>
+              <option value="3">3개월</option><option value="4">4개월</option>
+              <option value="5">5개월</option><option value="6">6개월</option>
+              <option value="7">7개월</option><option value="8">8개월</option>
+              <option value="9">9개월</option><option value="10">10개월</option>
+              <option value="11">11개월</option>
+            </select>
+          </div>
+          <div class="unit">취득일부터 양도일까지 (만 연수로 절사)</div>
+        </div>
+        <div class="field">
+          <label for="bizYears">그중 위 "사업용 요건"을 충족한 기간</label>
+          <input type="number" id="bizYears" value="12" min="0" max="70" step="0.5">
+          <div class="unit">연 단위. 위 요건 체크 결과에 따라 자동 제안되며 직접 수정 가능</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdictBox">
+      <div id="verdictBadge"></div>
+      <div class="verdictReason" id="verdictReason"></div>
+      <table class="testTable" id="testTable"></table>
+    </div>
+
+    <div class="override">
+      <label class="chk">
+        <input type="checkbox" id="overrideOn" onchange="render()">
+        판정 결과 대신 직접 지정 (예외 사유 등으로 판정과 다르게 확정된 경우)
+      </label>
+      <select id="overrideValue" style="display:none;" onchange="render()">
+        <option value="biz">사업용 토지로 확정</option>
+        <option value="nonbiz">비사업용 토지로 확정</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- ===================== STEP 2: 양도 정보 ===================== -->
+  <section class="block">
+    <div class="blockTitle"><span class="stepnum">2</span>양도 정보</div>
+    <div class="card">
+      <div class="grid2">
+        <div class="field">
+          <label for="acquire">취득가액</label>
+          <input type="number" id="acquire" value="300000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+        <div class="field">
+          <label for="transfer">양도가액</label>
+          <input type="number" id="transfer" value="700000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
       </div>
       <div class="field">
         <label for="expense">필요경비 (취득세·중개보수·자본적지출 등)</label>
         <input type="number" id="expense" value="15000000" min="0" step="500000">
         <div class="unit">원</div>
       </div>
-      <div class="field">
-        <label for="years">보유기간</label>
-        <div class="row2">
-          <input type="number" id="years" value="12" min="0" max="60" step="1">
-          <select id="months">
-            <option value="0" selected>0개월</option>
-            <option value="1">1개월</option><option value="2">2개월</option>
-            <option value="3">3개월</option><option value="4">4개월</option>
-            <option value="5">5개월</option><option value="6">6개월</option>
-            <option value="7">7개월</option><option value="8">8개월</option>
-            <option value="9">9개월</option><option value="10">10개월</option>
-            <option value="11">11개월</option>
-          </select>
-        </div>
-        <div class="unit">만 연수로 절사(1년 미만 버림), 3년 미만은 장기보유특별공제 미적용</div>
-      </div>
     </div>
+  </section>
 
+  <!-- ===================== STEP 3: 세율 시점 (비사업용일 때만 의미) ===================== -->
+  <section class="block">
+    <div class="blockTitle"><span class="stepnum">3</span>세액 계산 시점 <span style="font-weight:400;font-size:13px;color:var(--soil-500);margin-left:8px;">(비사업용 판정 시에만 적용되는 가산세율 구간)</span></div>
     <div class="card">
-      <h2>적용 기준시점</h2>
-      <div class="field">
-        <label>세율 구간 선택</label>
-        <div class="toggle">
-          <button id="btn-now" class="active" onclick="setMode('now')">현행 (~2027년 양도분)</button>
-          <button id="btn-future" onclick="setMode('future')">2028년 이후 양도분</button>
-        </div>
+      <div class="toggle">
+        <button id="btn-now" class="active" onclick="setMode('now')">현행 (~2027년 양도분)</button>
+        <button id="btn-future" onclick="setMode('future')">2028년 이후 양도분</button>
       </div>
-      <div class="field">
-        <label>과세대상 확인</label>
-        <div class="unit" style="margin-top:0;">
-          이 계산기는 해당 토지가 소득세법 제104조의3의 비사업용 토지(부재지주 농지·임야, 나대지, 별장 부속토지 등)에 <b>이미 해당함을 전제로</b> 세액만 계산합니다. 재촌·자경 여부, 사용금지 등 부득이한 사유로 비사업용 판정에서 제외되는지는 별도로 검토해야 합니다.
-        </div>
-      </div>
-      <div class="field">
-        <label>중과 구조 (선택된 시점 기준)</label>
-        <div id="modeInfo" style="font-size:13.5px;color:var(--soil-700);background:var(--wheat-50);border:1px solid var(--line);border-radius:6px;padding:12px 14px;"></div>
-      </div>
+      <div id="modeInfo" style="margin-top:12px;font-size:13.5px;color:var(--soil-700);background:var(--wheat-50);border:1px solid var(--line);border-radius:6px;padding:12px 14px;"></div>
     </div>
-  </div>
+  </section>
 
+  <!-- ===================== 결과 ===================== -->
   <div class="result">
     <div class="label">예상 양도소득세 (지방소득세 포함)</div>
     <div class="headline" id="headlineTax">0<span>원</span></div>
+    <div class="subline" id="headlineSub"></div>
     <div class="breakdown" id="breakdown"></div>
+    <div class="shortNote" id="shortNote" style="display:none;"></div>
   </div>
 
-  <div class="compare">
+  <div class="compare" id="compareBox">
     <table>
       <thead>
         <tr><th>구분</th><th>최고세율</th><th>장특공제</th><th>산출세액(지방세 포함)</th></tr>
       </thead>
       <tbody>
         <tr class="now">
-          <td>현행 (~2027년)</td><td id="cmpNowRate">-</td><td id="cmpNowDeduct">-</td><td id="cmpNowTax">-</td>
+          <td>현행 (~2027년, 비사업용 기준)</td><td id="cmpNowRate">-</td><td id="cmpNowDeduct">-</td><td id="cmpNowTax">-</td>
         </tr>
         <tr class="future">
-          <td>2028년 이후</td><td id="cmpFutureRate">-</td><td id="cmpFutureDeduct">-</td><td id="cmpFutureTax">-</td>
+          <td>2028년 이후 (비사업용 기준)</td><td id="cmpFutureRate">-</td><td id="cmpFutureDeduct">-</td><td id="cmpFutureTax">-</td>
         </tr>
       </tbody>
     </table>
@@ -334,7 +314,7 @@
   </div>
 
   <div class="sync">
-    <h2>기기 간 동기화</h2>
+    <h3>기기 간 동기화</h3>
     <div class="syncRow">
       <div class="syncField">
         <label for="pin">동기화 PIN (숫자 4~8자리, 모든 기기에서 동일하게 입력)</label>
@@ -347,22 +327,204 @@
   </div>
 
   <details class="basis">
-    <summary>계산 근거</summary>
+    <summary>판정·계산 근거</summary>
     <ul>
-      <li>기본세율(6~45%, 8단계 누진)에 비사업용 토지 가산세율을 더해 계산 — 현행 +10%p, 2028년 이후 +20%p (소득세법 제104조 제1항 제9호, 제104조의3)</li>
-      <li>장기보유특별공제: 3년 이상 보유 시 연 2%씩 가산, 최대 30%(15년 이상) — 2028년 이후 양도분부터는 비사업용 토지에 한해 공제 폐지(2026년 세제개편안)</li>
-      <li>양도소득 기본공제 연 250만원 적용</li>
-      <li>지방소득세(양도소득세의 10%)를 합산한 총 납부세액 기준</li>
-      <li>2026년 세제개편안은 2026.8.3 재정경제부 발표안이며, 국회 심의·시행령 제정 과정에서 세율·시행시기가 변경될 수 있습니다.</li>
+      <li><b>기간기준 (소득세법 시행령 제168조의6)</b> — 아래 중 하나라도 충족하면 그 기간 동안 사업용으로 인정: 소유기간 5년 이상은 ①직전 3년 중 2년 이상 ②직전 5년 중 3년 이상 ③소유기간의 60% 이상; 3년 이상 5년 미만은 ①직전 3년 중 2년 이상 ②소유기간 중 3년 이상 ③소유기간의 60% 이상; 3년 미만(2년 이상)은 ①직전 소유기간 중 2년 이상 ②소유기간의 60% 이상; 2년 미만은 ①소유기간의 60% 이상.</li>
+      <li><b>지목별 대상 기준 (제104조의3, 시행령 제168조의8~13)</b> — 농지: 재촌·자경하지 않거나 도시지역(녹지·개발제한구역 제외)에 있으면 비사업용 카테고리. 임야: 원칙적으로 비사업용이며 공익임야·재촌자 소유 등만 제외. 목장용지: 기준면적 초과·도시지역 소재·축산업 미경영 시 비사업용. 그 밖의 토지(나대지·잡종지): 원칙적으로 전부 비사업용. 주택 부속토지: 정착면적의 5배(도시지역 밖 10배) 초과분만 비사업용. 별장 부속토지: 읍면 소재·소규모·저가 등 제외요건 미충족 시 비사업용.</li>
+      <li>단기보유 특례: 소유기간 1년 미만은 50%, 2년 미만은 40%의 단일세율과 위 계산 세액을 비교해 더 큰 금액을 적용합니다.</li>
+      <li>기본세율(6~45%, 8단계 누진)에 비사업용 가산세율(현행 +10%p, 2028년 이후 +20%p)을 더해 계산 — 사업용 판정 시 가산 없음.</li>
+      <li>장기보유특별공제: 3년 이상 보유 시 연 2%씩 최대 30%(15년) — 비사업용은 2028년 이후 폐지 예정(2026년 세제개편안), 사업용은 계속 적용.</li>
+      <li>양도소득 기본공제 연 250만원, 지방소득세(양도소득세의 10%) 합산.</li>
     </ul>
   </details>
 
   <footer>
-    본 계산기는 참고용 추정치이며 법적 효력이 없습니다. 실제 신고 시 세무사 또는 관할 세무서를 통해 확정 세액을 확인하시기 바랍니다.
+    본 계산기는 참고용 추정치이며 법적 효력이 없습니다. 재촌·자경 증빙, 부득이한 사유 인정 여부 등 개별 사실관계에 따라 실제 판정이 달라질 수 있으므로, 실제 신고 시 세무사 또는 관할 세무서를 통해 확정하시기 바랍니다.
   </footer>
 </div>
 
 <script>
+// ============ 지목별 요건 정의 ============
+const TYPE_CONFIGS = {
+  farm: {
+    label: '농지',
+    fields: [
+      {id:'farm_jaechon', q:'농지 소재지(또는 연접 시·군·구, 농지로부터 직선거리 30km 이내)에 거주하며 본인이 직접 경작(재촌·자경)하고 있습니까?', def:'y'},
+      {id:'farm_city', q:'농지 소재지가 특별시·광역시·시지역의 도시지역 중 주거·상업·공업지역입니까? (녹지지역·개발제한구역·군/읍·면지역은 "아니오")', def:'n'}
+    ],
+    judge: (v) => {
+      const jaechon = v.farm_jaechon === 'y';
+      const city = v.farm_city === 'y';
+      const isBiz = jaechon && !city;
+      const reasons = [];
+      if (!jaechon) reasons.push('재촌·자경 요건을 충족하지 못해 원칙적으로 비사업용 농지(소득세법 제104조의3 제1항 제1호 가목)');
+      if (city) reasons.push('도시지역(주거·상업·공업지역) 안의 농지는 재촌·자경 여부와 무관하게 비사업용(제1호 나목)');
+      if (isBiz) reasons.push('재촌·자경 요건을 충족하고 도시지역(주거·상업·공업지역) 밖에 있어 사업용 농지로 인정');
+      return {isBiz, reasons};
+    }
+  },
+  forest: {
+    label: '임야',
+    fields: [
+      {id:'forest_exempt', q:'공익임야(산림유전자원보호림·보안림·채종림 등)이거나, 소유자가 임야 소재지에 주민등록을 두고 거주하고 있습니까?', def:'y'}
+    ],
+    judge: (v) => {
+      const isBiz = v.forest_exempt === 'y';
+      const reasons = isBiz
+        ? ['공익임야 또는 재촌 요건을 충족하여 사업용 임야로 인정(제104조의3 제1항 제2호 단서)']
+        : ['임야는 원칙적으로 비사업용 토지이며, 공익임야·재촌 등 제외 사유에 해당하지 않음(제104조의3 제1항 제2호)'];
+      return {isBiz, reasons};
+    }
+  },
+  pasture: {
+    label: '목장용지',
+    fields: [
+      {id:'pasture_ok', q:'축산업을 직접 경영하고 있고, 기준면적 이내이며, 도시지역(녹지·개발제한구역 제외) 밖에 소재합니까?', def:'y'}
+    ],
+    judge: (v) => {
+      const isBiz = v.pasture_ok === 'y';
+      const reasons = isBiz
+        ? ['축산업을 경영하며 기준면적 이내·도시지역 밖에 있어 사업용 목장용지로 인정(제104조의3 제1항 제3호)']
+        : ['축산업 미경영, 기준면적 초과, 또는 도시지역 소재로 비사업용 목장용지(제104조의3 제1항 제3호)'];
+      return {isBiz, reasons};
+    }
+  },
+  house: {
+    label: '주택 부속토지',
+    fields: [
+      {id:'house_ratio', q:'부속토지 면적이 주택 정착면적의 5배(도시지역 밖은 10배) 이내입니까?', def:'y'}
+    ],
+    judge: (v) => {
+      const isBiz = v.house_ratio === 'y';
+      const reasons = isBiz
+        ? ['정착면적 배율(도시지역 내 5배, 도시지역 밖 10배) 이내로 전부 사업용(주택 부수토지)']
+        : ['정착면적 배율 초과분은 비사업용 토지에 해당(제104조의3 제1항 제4호 가목) — 초과 면적 비율만큼만 과세 시 별도 안분 필요']
+      return {isBiz, reasons};
+    }
+  },
+  villa: {
+    label: '별장 부속토지',
+    fields: [
+      {id:'villa_exempt', q:'읍·면 지역 소재 + 건물 연면적 150㎡ 이내 + 부속토지 660㎡ 이내 + 건물·토지 기준시가 합계 2억원 이하 + 수도권/도시지역/지정지역/토지거래허가구역 제외, 이 요건을 모두 충족합니까?', def:'n'}
+    ],
+    judge: (v) => {
+      const isBiz = v.villa_exempt === 'y';
+      const reasons = isBiz
+        ? ['농어촌주택 특례 제외요건을 모두 충족하여 별장으로 보지 않음 — 일반 주택 부속토지 기준 적용']
+        : ['별장 제외요건을 충족하지 못해 별장 부속토지로 비사업용(제104조의3 제1항 제4호 나목)'];
+      return {isBiz, reasons};
+    }
+  },
+  etc: {
+    label: '그 밖의 토지 (나대지·잡종지)',
+    fields: [
+      {id:'etc_building', q:'건축 착공 후 정당한 사유 없이 공사가 중단되지 않고 계속 진행 중입니까? (취득일부터 2년 이내 + 착공 이후 건설 중인 기간만 사업용으로 인정)', def:'n'}
+    ],
+    judge: (v) => {
+      const isBiz = v.etc_building === 'y';
+      const reasons = isBiz
+        ? ['건축물 신축을 위해 착공하여 건설이 진행 중인 기간은 사업에 직접 사용한 기간으로 인정']
+        : ['건축물이 없는 나대지·잡종지로 재산세 종합합산과세대상에 해당해 원칙적으로 전 기간 비사업용(제104조의3 제1항 제5호)'];
+      return {isBiz, reasons};
+    }
+  }
+};
+
+function onLandTypeChange(){
+  const type = document.getElementById('landType').value;
+  const cfg = TYPE_CONFIGS[type];
+  const container = document.getElementById('typeFields');
+  container.innerHTML = cfg.fields.map(f => `
+    <div class="field">
+      <label>${f.q}</label>
+      <div class="yn" data-field="${f.id}">
+        <label class="${f.def==='y'?'checked':''}"><input type="radio" name="${f.id}" value="y" ${f.def==='y'?'checked':''} onchange="onTypeFieldChange()"> 예</label>
+        <label class="${f.def==='n'?'checked':''}"><input type="radio" name="${f.id}" value="n" ${f.def==='n'?'checked':''} onchange="onTypeFieldChange()"> 아니오</label>
+      </div>
+    </div>
+  `).join('');
+  onTypeFieldChange();
+}
+
+function getTypeFieldValues(){
+  const type = document.getElementById('landType').value;
+  const cfg = TYPE_CONFIGS[type];
+  const v = {};
+  cfg.fields.forEach(f=>{
+    const checked = document.querySelector(`input[name="${f.id}"]:checked`);
+    v[f.id] = checked ? checked.value : f.def;
+  });
+  return v;
+}
+
+let bizYearsManuallyEdited = false;
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('bizYears').addEventListener('input', ()=>{ bizYearsManuallyEdited = true; render(); });
+});
+
+function onTypeFieldChange(){
+  // 라디오 버튼 시각 표시 갱신
+  document.querySelectorAll('.yn').forEach(group=>{
+    group.querySelectorAll('label').forEach(lbl=>{
+      const input = lbl.querySelector('input');
+      lbl.classList.toggle('checked', input.checked);
+    });
+  });
+
+  const type = document.getElementById('landType').value;
+  const cfg = TYPE_CONFIGS[type];
+  const v = getTypeFieldValues();
+  const {isBiz} = cfg.judge(v);
+
+  document.getElementById('categoryNote').textContent =
+    isBiz
+      ? '현재 요건 기준: 사업용 카테고리에 해당 (아래 "사업용 요건 충족 기간"의 기본값이 전체 소유기간으로 제안됩니다)'
+      : '현재 요건 기준: 비사업용 카테고리에 해당 (아래 "사업용 요건 충족 기간"의 기본값이 0으로 제안됩니다)';
+
+  if (!bizYearsManuallyEdited){
+    const years = Number(document.getElementById('years').value) || 0;
+    const months = Number(document.getElementById('months').value) || 0;
+    const totalYears = years + months/12;
+    document.getElementById('bizYears').value = isBiz ? Math.round(totalYears*10)/10 : 0;
+  }
+  render();
+}
+
+// ============ 기간기준 3단계 OR 테스트 ============
+function periodTest(ownYears, bizYears){
+  // ownYears, bizYears: 소수 허용 (년 단위)
+  let bracket, tests;
+  if (ownYears >= 5){
+    bracket = '소유기간 5년 이상';
+    tests = [
+      {label:'양도일 직전 5년 중 3년 이상 사업용', need: 3, base: Math.min(ownYears,5), pass: Math.min(bizYears,5) >= 3},
+      {label:'양도일 직전 3년 중 2년 이상 사업용', need: 2, base: Math.min(ownYears,3), pass: Math.min(bizYears,3) >= 2},
+      {label:'전체 소유기간의 60% 이상 사업용', need: null, base: ownYears, pass: bizYears >= ownYears*0.6}
+    ];
+  } else if (ownYears >= 3){
+    bracket = '소유기간 3년 이상 5년 미만';
+    tests = [
+      {label:'소유기간 중 3년 이상 사업용', need: 3, base: ownYears, pass: bizYears >= 3},
+      {label:'양도일 직전 3년 중 2년 이상 사업용', need: 2, base: Math.min(ownYears,3), pass: Math.min(bizYears,3) >= 2},
+      {label:'전체 소유기간의 60% 이상 사업용', need: null, base: ownYears, pass: bizYears >= ownYears*0.6}
+    ];
+  } else if (ownYears >= 2){
+    bracket = '소유기간 2년 이상 3년 미만';
+    tests = [
+      {label:'소유기간 중 2년 이상 사업용', need: 2, base: ownYears, pass: bizYears >= 2},
+      {label:'전체 소유기간의 60% 이상 사업용', need: null, base: ownYears, pass: bizYears >= ownYears*0.6}
+    ];
+  } else {
+    bracket = '소유기간 2년 미만';
+    tests = [
+      {label:'전체 소유기간의 60% 이상 사업용', need: null, base: ownYears, pass: bizYears >= ownYears*0.6}
+    ];
+  }
+  const isBiz = tests.some(t => t.pass); // 하나라도 충족하면 사업용
+  return {bracket, tests, isBiz};
+}
+
+// ============ 세액 계산 ============
 const BASE_BRACKETS = [
   {upTo: 14000000, rate: 0.06},
   {upTo: 50000000, rate: 0.15},
@@ -375,64 +537,57 @@ const BASE_BRACKETS = [
 ];
 
 const MODE_INFO = {
-  now: {
-    surcharge: 0.10,
-    ltcgAllowed: true,
-    label: '기본세율 + 10%p 가산, 최고세율 60.5%(지방세 포함), 장기보유특별공제 최대 30% 적용'
-  },
-  future: {
-    surcharge: 0.20,
-    ltcgAllowed: false,
-    label: '기본세율 + 20%p 가산, 최고세율 71.5%(지방세 포함), 장기보유특별공제 폐지(2026년 세제개편안)'
-  }
+  now:    {surcharge: 0.10, ltcgAllowed: true,  label: '비사업용일 경우: 기본세율 + 10%p 가산, 최고세율 60.5%(지방세 포함), 장기보유특별공제 최대 30% 적용'},
+  future: {surcharge: 0.20, ltcgAllowed: false, label: '비사업용일 경우: 기본세율 + 20%p 가산, 최고세율 71.5%(지방세 포함), 장기보유특별공제 폐지(2026년 세제개편안)'}
 };
 
 let currentMode = 'now';
 
-function won(n){
-  return Math.round(n).toLocaleString('ko-KR');
-}
+function won(n){ return Math.round(n).toLocaleString('ko-KR'); }
 
 function calcTax(gain, surcharge){
-  // gain: 과세표준(양도소득금액 - 기본공제), returns 산출세액(지방세 제외)
-  let tax = 0;
-  let lower = 0;
+  let tax = 0, lower = 0;
   for (const b of BASE_BRACKETS){
     if (gain <= lower) break;
     const width = Math.min(gain, b.upTo) - lower;
-    if (width > 0){
-      tax += width * (b.rate + surcharge);
-    }
+    if (width > 0) tax += width * (b.rate + surcharge);
     lower = b.upTo;
   }
   return tax;
 }
 
-function ltcgRate(years, months, allowed){
+function ltcgRate(wholeYears, allowed){
   if (!allowed) return 0;
-  // 세법상 보유연수는 만 연수로 절사(1년 미만 버림) — 개월 입력을 반영해 정확히 절사
-  const wholeYears = Math.floor(years + (months || 0) / 12);
   if (wholeYears < 3) return 0;
   return Math.min(0.30, wholeYears * 0.02);
 }
 
-function computeFor(modeKey, inputs){
-  const info = MODE_INFO[modeKey];
+function computeFor(isBiz, surcharge, ltcgAllowedIfNonBiz, inputs, wholeYears){
+  // isBiz=true → surcharge 0, 장특공 정상 적용(항상 허용)
+  // isBiz=false → surcharge 적용, 장특공은 ltcgAllowedIfNonBiz 여부에 따름
   const gainRaw = inputs.transfer - inputs.acquire - inputs.expense;
   const gain = Math.max(0, gainRaw);
-  const deductRate = ltcgRate(inputs.years, inputs.months, info.ltcgAllowed);
+  const effSurcharge = isBiz ? 0 : surcharge;
+  const effLtcgAllowed = isBiz ? true : ltcgAllowedIfNonBiz;
+  const deductRate = ltcgRate(wholeYears, effLtcgAllowed);
   const ltcgDeduct = gain * deductRate;
   const afterLtcg = gain - ltcgDeduct;
   const basicDeduct = Math.min(2500000, afterLtcg);
   const taxBase = Math.max(0, afterLtcg - 2500000);
-  const nationalTax = calcTax(taxBase, info.surcharge);
+  const nationalTax = calcTax(taxBase, effSurcharge);
   const localTax = nationalTax * 0.10;
   const totalTax = nationalTax + localTax;
-  const topRate = (BASE_BRACKETS[BASE_BRACKETS.length-1].rate + info.surcharge) * 1.10;
-  return {
-    gain, deductRate, ltcgDeduct, afterLtcg, basicDeduct, taxBase,
-    nationalTax, localTax, totalTax, topRate
-  };
+  return {gain, deductRate, ltcgDeduct, afterLtcg, basicDeduct, taxBase, nationalTax, localTax, totalTax};
+}
+
+function flatRateTax(inputs, ratePct){
+  // 단기보유 특례: 양도차익-장특공(없음)-기본공제 후 단일세율
+  const gainRaw = inputs.transfer - inputs.acquire - inputs.expense;
+  const gain = Math.max(0, gainRaw);
+  const taxBase = Math.max(0, gain - 2500000);
+  const nationalTax = taxBase * ratePct;
+  const localTax = nationalTax * 0.10;
+  return nationalTax + localTax;
 }
 
 function getInputs(){
@@ -441,7 +596,8 @@ function getInputs(){
     transfer: Number(document.getElementById('transfer').value) || 0,
     expense: Number(document.getElementById('expense').value) || 0,
     years: Number(document.getElementById('years').value) || 0,
-    months: Number(document.getElementById('months').value) || 0
+    months: Number(document.getElementById('months').value) || 0,
+    bizYears: Number(document.getElementById('bizYears').value) || 0
   };
 }
 
@@ -454,12 +610,69 @@ function setMode(m){
 
 function render(){
   const inputs = getInputs();
-  const now = computeFor('now', inputs);
-  const future = computeFor('future', inputs);
-  const active = currentMode === 'now' ? now : future;
+  const ownYears = inputs.years + inputs.months/12;
+  const wholeYears = Math.floor(ownYears);
 
-  document.getElementById('modeInfo').textContent = MODE_INFO[currentMode].label;
-  document.getElementById('headlineTax').innerHTML = won(active.totalTax) + '<span>원</span>';
+  // ---- 1) 판정 ----
+  const type = document.getElementById('landType').value;
+  const cfg = TYPE_CONFIGS[type];
+  const v = getTypeFieldValues();
+  const catJudge = cfg.judge(v);
+  const pt = periodTest(ownYears, inputs.bizYears);
+
+  const overrideOn = document.getElementById('overrideOn').checked;
+  document.getElementById('overrideValue').style.display = overrideOn ? 'block' : 'none';
+  const finalIsBiz = overrideOn
+    ? (document.getElementById('overrideValue').value === 'biz')
+    : pt.isBiz;
+
+  // 배지
+  const badgeEl = document.getElementById('verdictBadge');
+  badgeEl.innerHTML = finalIsBiz
+    ? '<span class="badge biz">사업용 토지로 판정</span>'
+    : '<span class="badge nonbiz">비사업용 토지로 판정 (양도세 중과 대상)</span>';
+
+  const reasonEl = document.getElementById('verdictReason');
+  let reasonHtml = `<div><b>[${cfg.label}]</b> 지목 요건: ${catJudge.reasons.join(' · ')}</div>`;
+  reasonHtml += `<div style="margin-top:6px;">기간기준(${pt.bracket}): 사업용 요건 충족 기간 ${inputs.bizYears.toFixed(1)}년 / 전체 소유기간 ${ownYears.toFixed(1)}년 — `;
+  reasonHtml += pt.isBiz ? '아래 기준 중 하나 이상 충족하여 <b>사업용</b>으로 인정' : '아래 기준을 모두 충족하지 못해 <b>비사업용</b>으로 판정';
+  reasonHtml += '</div>';
+  if (overrideOn) reasonHtml += `<div style="margin-top:6px;color:var(--accent-deep);">※ 직접 지정을 적용하여 위 자동판정과 무관하게 "${finalIsBiz?'사업용':'비사업용'}"으로 계산합니다.</div>`;
+  reasonEl.innerHTML = reasonHtml;
+
+  const tt = document.getElementById('testTable');
+  tt.innerHTML = '<tr><th>기간기준 항목</th><th>기준</th><th>실제(추정)</th><th>충족여부</th></tr>' +
+    pt.tests.map(t => `<tr>
+        <td>${t.label}</td>
+        <td>${t.need !== null ? t.need+'년 이상' : (t.base*0.6).toFixed(1)+'년 이상(60%)'}</td>
+        <td>${(t.need !== null ? Math.min(inputs.bizYears, t.base) : inputs.bizYears).toFixed(1)}년</td>
+        <td class="${t.pass?'pass':'fail'}">${t.pass?'충족':'미충족'}</td>
+      </tr>`).join('');
+
+  // ---- 2) 세액 계산 ----
+  const modeInfo = MODE_INFO[currentMode];
+  document.getElementById('modeInfo').textContent = modeInfo.label;
+
+  const active = computeFor(finalIsBiz, modeInfo.surcharge, true, inputs, wholeYears);
+
+  // 단기보유 특례 비교
+  let shortNoteHtml = '';
+  let finalTotal = active.totalTax;
+  if (wholeYears < 2){
+    const flatRate = wholeYears < 1 ? 0.50 : 0.40;
+    const flatTax = flatRateTax(inputs, flatRate);
+    if (flatTax > active.totalTax){
+      finalTotal = flatTax;
+      shortNoteHtml = `단기보유 특례: 소유기간 ${wholeYears<1?'1년 미만(50%)':'2년 미만(40%)'} 단일세율 적용 세액 ${won(flatTax)}원이 위 계산 세액보다 커서, 더 큰 금액인 <b>${won(flatTax)}원</b>이 최종 적용됩니다.`;
+    } else {
+      shortNoteHtml = `단기보유 특례(${wholeYears<1?'1년 미만 50%':'2년 미만 40%'} 단일세율 적용 시 ${won(flatTax)}원)와 비교했으나, 위 계산 세액이 더 커 그대로 적용됩니다.`;
+    }
+  }
+  document.getElementById('shortNote').style.display = shortNoteHtml ? 'block' : 'none';
+  document.getElementById('shortNote').innerHTML = shortNoteHtml;
+
+  document.getElementById('headlineTax').innerHTML = won(finalTotal) + '<span>원</span>';
+  document.getElementById('headlineSub').textContent = finalIsBiz ? '비사업용 토지 중과세율 적용' : '사업용 토지 — 일반세율 적용(가산 없음)';
 
   document.getElementById('breakdown').innerHTML = `
     <div class="brow"><span class="k">양도차익 (양도가액 − 취득가액 − 필요경비)</span><span class="v">${won(active.gain)}원</span></div>
@@ -469,27 +682,42 @@ function render(){
     <div class="brow"><span class="k">과세표준</span><span class="v">${won(active.taxBase)}원</span></div>
     <div class="brow"><span class="k">양도소득세 (산출세액)</span><span class="v">${won(active.nationalTax)}원</span></div>
     <div class="brow"><span class="k">지방소득세 (10%)</span><span class="v">${won(active.localTax)}원</span></div>
-    <div class="brow total"><span class="k">총 납부세액</span><span class="v">${won(active.totalTax)}원</span></div>
+    <div class="brow total"><span class="k">총 납부세액</span><span class="v">${won(finalTotal)}원</span></div>
   `;
 
+  // 비교표는 "비사업용으로 판정될 경우"를 가정해 현행/2028 비교 (판정 참고용)
+  const nowCalc = computeFor(false, MODE_INFO.now.surcharge, true, inputs, wholeYears);
+  const futureCalc = computeFor(false, MODE_INFO.future.surcharge, false, inputs, wholeYears);
+  document.getElementById('compareBox').style.opacity = finalIsBiz ? '1' : '0.55';
   document.getElementById('cmpNowRate').textContent = '60.5%';
-  document.getElementById('cmpNowDeduct').textContent = (now.deductRate*100).toFixed(0) + '%';
-  document.getElementById('cmpNowTax').textContent = won(now.totalTax) + '원';
-
+  document.getElementById('cmpNowDeduct').textContent = (nowCalc.deductRate*100).toFixed(0) + '%';
+  document.getElementById('cmpNowTax').textContent = won(nowCalc.totalTax) + '원';
   document.getElementById('cmpFutureRate').textContent = '71.5%';
   document.getElementById('cmpFutureDeduct').textContent = '0%';
-  document.getElementById('cmpFutureTax').textContent = won(future.totalTax) + '원';
-
-  const diff = future.totalTax - now.totalTax;
-  const diffPct = now.totalTax > 0 ? (diff / now.totalTax * 100).toFixed(1) : '0.0';
+  document.getElementById('cmpFutureTax').textContent = won(futureCalc.totalTax) + '원';
+  const diff = futureCalc.totalTax - nowCalc.totalTax;
+  const diffPct = nowCalc.totalTax > 0 ? (diff / nowCalc.totalTax * 100).toFixed(1) : '0.0';
   document.getElementById('diffLine').innerHTML =
-    diff >= 0
-      ? `같은 조건이라면 2028년 이후 양도 시 현행 대비 <b>${won(diff)}원(+${diffPct}%)</b> 세부담이 늘어납니다.`
-      : `같은 조건이라면 2028년 이후 양도 시 현행 대비 <b>${won(-diff)}원(${diffPct}%)</b> 세부담이 줄어듭니다.`;
+    (finalIsBiz ? '' : '<i>※ 현재 사업용으로 판정되어 아래 비교는 참고용입니다.</i><br>') +
+    (diff >= 0
+      ? `이 토지가 비사업용이라면, 2028년 이후 양도 시 현행 대비 <b>${won(diff)}원(+${diffPct}%)</b> 세부담이 늘어납니다.`
+      : `이 토지가 비사업용이라면, 2028년 이후 양도 시 현행 대비 <b>${won(-diff)}원(${diffPct}%)</b> 세부담이 줄어듭니다.`);
 }
 
 ['acquire','transfer','expense','years','months'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', render);
+  document.getElementById(id).addEventListener('input', ()=>{
+    if (!bizYearsManuallyEdited){
+      const type = document.getElementById('landType').value;
+      const cfg = TYPE_CONFIGS[type];
+      const v = getTypeFieldValues();
+      const {isBiz} = cfg.judge(v);
+      const years = Number(document.getElementById('years').value) || 0;
+      const months = Number(document.getElementById('months').value) || 0;
+      const totalYears = years + months/12;
+      document.getElementById('bizYears').value = isBiz ? Math.round(totalYears*10)/10 : 0;
+    }
+    render();
+  });
   document.getElementById(id).addEventListener('change', render);
 });
 
@@ -509,13 +737,19 @@ async function saveToCloud(){
   const pin = document.getElementById('pin').value.trim();
   if (!pin){ setSyncStatus('PIN을 입력하세요.', 'err'); return; }
   localStorage.setItem('nonbiz-land-tax-pin', pin);
-  const payload = { ...getInputs(), mode: currentMode, savedAt: new Date().toISOString() };
+  const payload = {
+    ...getInputs(),
+    mode: currentMode,
+    landType: document.getElementById('landType').value,
+    typeFieldValues: getTypeFieldValues(),
+    overrideOn: document.getElementById('overrideOn').checked,
+    overrideValue: document.getElementById('overrideValue').value,
+    savedAt: new Date().toISOString()
+  };
   try{
     setSyncStatus('저장 중...');
     const res = await fetch(`${SYNC_SERVER}/sync/${encodeURIComponent(pin)}`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error('서버 응답 오류');
     setSyncStatus('저장 완료 — 다른 기기에서 같은 PIN으로 불러올 수 있습니다.', 'ok');
@@ -538,6 +772,17 @@ async function loadFromCloud(){
     if (data.expense !== undefined) document.getElementById('expense').value = data.expense;
     if (data.years !== undefined) document.getElementById('years').value = data.years;
     if (data.months !== undefined) document.getElementById('months').value = data.months;
+    if (data.landType){ document.getElementById('landType').value = data.landType; onLandTypeChange(); }
+    if (data.typeFieldValues){
+      Object.entries(data.typeFieldValues).forEach(([k,val])=>{
+        const el = document.querySelector(`input[name="${k}"][value="${val}"]`);
+        if (el) el.checked = true;
+      });
+      onTypeFieldChange();
+    }
+    if (data.bizYears !== undefined){ document.getElementById('bizYears').value = data.bizYears; bizYearsManuallyEdited = true; }
+    if (data.overrideOn !== undefined) document.getElementById('overrideOn').checked = data.overrideOn;
+    if (data.overrideValue) document.getElementById('overrideValue').value = data.overrideValue;
     if (data.mode) setMode(data.mode); else render();
     setSyncStatus('불러오기 완료.', 'ok');
   }catch(e){
@@ -545,6 +790,8 @@ async function loadFromCloud(){
   }
 }
 
+// 초기화
+onLandTypeChange();
 render();
 </script>
 </body>
