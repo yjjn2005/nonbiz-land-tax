@@ -618,10 +618,13 @@
   <div class="tabpanel" id="tab-sync" style="display:none;">
   <div class="sync">
     <h3>기기 간 동기화</h3>
+    <div class="notice" style="margin-top:0;margin-bottom:16px;">
+      사용법: ① 한 기기에서 PIN(영문/숫자 4~8자)을 정해 <b>"이 기기 입력값 저장"</b> 클릭 → ② 다른 기기에서 <b>같은 PIN을 정확히</b> 입력하고 <b>"다른 기기 값 불러오기"</b> 클릭. 저장 직후 곧바로 불러올 경우 서버 반영에 몇 초 걸릴 수 있으니, 실패하면 5~10초 후 다시 시도해 보세요.
+    </div>
     <div class="syncRow">
       <div class="syncField">
-        <label for="pin">동기화 PIN (숫자 4~8자리, 모든 기기에서 동일하게 입력)</label>
-        <input type="text" id="pin" inputmode="numeric" placeholder="예: 1234">
+        <label for="pin">동기화 PIN (영문/숫자 4~8자, 모든 기기에서 동일하게 입력)</label>
+        <input type="text" id="pin" inputmode="text" maxlength="8" placeholder="예: 1234 (영문/숫자 4~8자)">
       </div>
       <button class="syncBtn" onclick="saveToCloud()">이 기기 입력값 저장</button>
       <button class="syncBtn ghost" onclick="loadFromCloud()">다른 기기 값 불러오기</button>
@@ -1433,9 +1436,18 @@ function setSyncStatus(msg, cls){
   el.className = 'syncStatus' + (cls ? ' ' + cls : '');
 }
 
+const PIN_PATTERN = /^[A-Za-z0-9]{4,8}$/;
+
+function validatePin(pin){
+  if (!pin) return 'PIN을 입력하세요.';
+  if (!PIN_PATTERN.test(pin)) return 'PIN은 영문/숫자 4~8자로 입력하세요 (공백·특수문자 불가).';
+  return null;
+}
+
 async function saveToCloud(){
   const pin = document.getElementById('pin').value.trim();
-  if (!pin){ setSyncStatus('PIN을 입력하세요.', 'err'); return; }
+  const err = validatePin(pin);
+  if (err){ setSyncStatus(err, 'err'); return; }
   localStorage.setItem('nonbiz-land-tax-pin', pin);
   const payload = {
     ...getInputs(),
@@ -1454,21 +1466,32 @@ async function saveToCloud(){
     const res = await fetch(`${SYNC_SERVER}/sync/${encodeURIComponent(pin)}`, {
       method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error('서버 응답 오류');
-    setSyncStatus('저장 완료 — 다른 기기에서 같은 PIN으로 불러올 수 있습니다.', 'ok');
+    if (!res.ok){
+      setSyncStatus(`저장 실패: 서버 오류(${res.status}). PIN 형식을 확인하거나 잠시 후 다시 시도하세요.`, 'err');
+      return;
+    }
+    setSyncStatus(`저장 완료 (PIN: ${pin}) — 다른 기기에서 같은 PIN으로 불러올 수 있습니다.`, 'ok');
   }catch(e){
-    setSyncStatus('저장 실패: 네트워크 또는 서버 상태를 확인하세요.', 'err');
+    setSyncStatus('저장 실패: 인터넷 연결 또는 서버 상태를 확인하세요.', 'err');
   }
 }
 
 async function loadFromCloud(){
   const pin = document.getElementById('pin').value.trim();
-  if (!pin){ setSyncStatus('PIN을 입력하세요.', 'err'); return; }
+  const err = validatePin(pin);
+  if (err){ setSyncStatus(err, 'err'); return; }
   localStorage.setItem('nonbiz-land-tax-pin', pin);
   try{
     setSyncStatus('불러오는 중...');
     const res = await fetch(`${SYNC_SERVER}/sync/${encodeURIComponent(pin)}`);
-    if (!res.ok) throw new Error('데이터 없음');
+    if (res.status === 404){
+      setSyncStatus(`이 PIN(${pin})으로 저장된 값이 없습니다. 먼저 다른 기기에서 "이 기기 입력값 저장"을 눌렀는지, PIN 철자가 같은지 확인하세요.`, 'err');
+      return;
+    }
+    if (!res.ok){
+      setSyncStatus(`불러오기 실패: 서버 오류(${res.status}). 잠시 후 다시 시도하세요.`, 'err');
+      return;
+    }
     const data = await res.json();
     if (data.acquire !== undefined) document.getElementById('acquire').value = data.acquire;
     if (data.transfer !== undefined) document.getElementById('transfer').value = data.transfer;
@@ -1505,9 +1528,9 @@ async function loadFromCloud(){
       }
     }
     if (data.mode) setMode(data.mode); else render();
-    setSyncStatus('불러오기 완료.', 'ok');
+    setSyncStatus(`불러오기 완료 (PIN: ${pin}).`, 'ok');
   }catch(e){
-    setSyncStatus('불러오기 실패: 저장된 값이 없거나 서버에 연결할 수 없습니다.', 'err');
+    setSyncStatus('불러오기 실패: 인터넷 연결을 확인하거나 잠시 후 다시 시도하세요.', 'err');
   }
 }
 
