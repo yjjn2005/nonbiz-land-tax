@@ -234,6 +234,7 @@
     <button class="tabbtn active" data-tab="calc" onclick="switchTab('calc')">직접계산</button>
     <button class="tabbtn" data-tab="legal" onclick="switchTab('legal')">조세심판원 판례검색</button>
     <button class="tabbtn" data-tab="ref" onclick="switchTab('ref')">지목별 근거자료</button>
+    <button class="tabbtn" data-tab="parking" onclick="switchTab('parking')">노외주차장 판례</button>
     <button class="tabbtn" data-tab="sync" onclick="switchTab('sync')">기기간 동기화</button>
   </nav>
 
@@ -474,6 +475,87 @@
     </div>
   </section>
   </div><!-- /tab-ref -->
+
+  <div class="tabpanel" id="tab-parking" style="display:none;">
+  <!-- ===================== 노외주차장 사업용 인정 사례 ===================== -->
+  <section class="block">
+    <div class="blockTitle">잡종지 노외주차장 — 사업용 인정 요건과 사례</div>
+    <div class="notice">
+      개인 소유 잡종지·나대지를 노외주차장으로 운영해 비사업용 토지 중과에서 제외받으려면, 법제처 API로 조회한 실제 조세심판원 사례들을 종합하면 아래 3가지를 <b>모두</b> 갖춰야 인정됩니다. 하나라도 빠지면 대부분 기각되었습니다.
+    </div>
+
+    <div class="card">
+      <h3>① 인정 요건 (소득세법 시행령 제168조의11 제1항 제2호)</h3>
+      <div style="font-size:13.5px;color:var(--soil-700);line-height:1.8;">
+        <p><b>가목</b> — 「주차장법」에 따른 부설주차장(주택 부설주차장 제외) 설치기준면적 이내의 토지, 또는</p>
+        <p><b>다목</b> — 다음을 모두 충족하는 주차장운영업용 노외주차장 토지<br>
+        1) 「주차장법」에 따라 <b>노외주차장 설치신고를 하고 신고필증을 교부</b>받을 것<br>
+        2) 토지 소유자 <b>본인이 자기의 책임과 계산으로</b> 주차장운영업을 영위할 것 — 사업자등록 필수. 타인에게 토지만 임대하고 임차인이 운영하는 경우는 불인정<br>
+        3) <b>연간 주차장 수입금액을 사업소득으로 신고</b>할 것<br>
+        4) 연간 수입금액이 토지가액에 대해 기획재정부령이 정하는 비율(통상 3%) 이상일 것</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>② 사업용으로 인정된 사례</h3>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=ttSpecialDecc&ID=937880&type=HTML" target="_blank" rel="noopener">이 사건 토지가 주차장법에 의하여 설치한 노외주차장의 부속토지로 사용되고 있는지 여부 (취소)</a>
+        <div class="legalMeta"><b>국심 제2001-0473호</b> · 2001.09.24 · 관련법령: 주차장법 제12조(노외주차장의 설치 등)</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">
+          청구인이 주차전용건축물 신축을 위해 토지를 취득한 뒤, <b>주차장법에 따른 노외주차장 설치신고서를 제출해 신고필증을 교부받고</b> 실제로 노외주차장으로 사용한 사실이 확인되어, 취득세·등록세 등 329,409,980원 추징 처분이 전부 취소됨. "설치신고 + 신고필증 교부 + 실사용"이 핵심 인정 근거였음(취득세·등록세 사건이나 "노외주차장 설치신고" 요건 판단은 양도세 비사업용 판정과 동일한 법리).
+        </div>
+      </div>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=prec&ID=326178&type=HTML" target="_blank" rel="noopener">스포츠센터 건물의 편익과 효익을 위한 노외주차장은 비사업용토지에 해당하지 않음</a>
+        <div class="legalMeta"><b>대구고등법원-2019-누-2443</b> · 2020.02.21</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">
+          시설 이용객을 위한 노외주차장으로 실제 사용되고 있는 점이 인정되어 비사업용 토지 중과가 배제된 사례.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>③ 반면교사 — 불인정(기각)된 사례</h3>
+      <div style="font-size:12.5px;color:var(--soil-500);margin-bottom:10px;">아래는 모두 "쟁점토지를 주차장으로 사용했으니 사업용"이라 주장했지만 기각된 사례입니다. 부족했던 요건을 확인하세요.</div>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=ttSpecialDecc&ID=945682&type=HTML" target="_blank" rel="noopener">주차장 용도로 임대한 쟁점토지를 비사업용 토지로 보아 장기보유특별공제를 부인하여 양도소득세를 과세한 처분의 당부</a>
+        <div class="legalMeta"><b>조심 2016부3944</b> · 2016.12.29 · 기각</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">부족 요건: 청구인이 주차장운영업에 관해 <b>사업자등록이나 수입금액 신고를 한 사실이 없음</b> — "자기 책임과 계산으로 운영" 요건 미충족.</div>
+      </div>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=ttSpecialDecc&ID=326772&type=HTML" target="_blank" rel="noopener">숙박(모텔)업 사업자의 주차장으로 임대한 쟁점토지가 비사업용 토지에 해당하지 않는다는 청구주장의 당부</a>
+        <div class="legalMeta"><b>조심 2019구1609</b> · 2019.07.30 · 기각</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">부족 요건: 청구인은 <b>주차장운영업이 아닌 토지임대업</b>을 영위한 것으로 판단 — 소유자 본인의 주차장운영업이 아니면 불인정.</div>
+      </div>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=ttSpecialDecc&ID=190326&type=HTML" target="_blank" rel="noopener">쟁점토지가 병원의 부설주차장으로 실질적으로 사용되었으므로 사업용토지로 보아야 한다는 청구주장의 당부</a>
+        <div class="legalMeta"><b>조심 2013서2498</b> · 2013.09.16 · 기각</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">부족 요건: <b>주차장법에 따른 신고·허가를 받은 사실이 없음</b> — 사실상 주차장으로 썼더라도 법정 신고 절차 없이는 불인정.</div>
+      </div>
+      <div class="legalItem">
+        <a href="https://www.law.go.kr/DRF/lawService.do?OC=yjjn2005&target=ttSpecialDecc&ID=22970&type=HTML" target="_blank" rel="noopener">무주택세대가 소유한 1필지의 대지를 임대하여 임차인이 주차장으로 사용한 경우 비사업용 토지에서 제외되는 토지에 해당하는지 여부</a>
+        <div class="legalMeta"><b>조심 2014중3702</b> · 2014.11.14 · 기각</div>
+        <div style="font-size:13px;color:var(--soil-700);margin-top:6px;">부족 요건: 단순히 <b>임차인에게 임대료를 받고 임대</b>했을 뿐 — 소유자가 직접 운영하지 않아 불인정.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>④ 더 찾아보기</h3>
+      <div class="row2">
+        <input type="text" id="parkingQuery" value="노외주차장" placeholder="검색어">
+        <button class="syncBtn" onclick="searchParking()" style="width:100%;">검색</button>
+      </div>
+      <div class="chipRow" style="margin-top:10px;">
+        <button type="button" class="chip" onclick="document.getElementById('parkingQuery').value='주차장운영업';searchParking();">주차장운영업</button>
+        <button type="button" class="chip" onclick="document.getElementById('parkingQuery').value='부설주차장';searchParking();">부설주차장</button>
+        <button type="button" class="chip" onclick="document.getElementById('parkingQuery').value='주차장 설치신고';searchParking();">주차장 설치신고</button>
+        <button type="button" class="chip" onclick="document.getElementById('parkingQuery').value='주차장 기준면적 초과';searchParking();">주차장 기준면적 초과</button>
+      </div>
+      <div id="parkingStatus" style="font-size:12.5px;color:var(--soil-500);margin-top:10px;"></div>
+      <div id="parkingResults" style="margin-top:8px;"></div>
+    </div>
+  </section>
+  </div><!-- /tab-parking -->
 
   <div class="tabpanel" id="tab-sync" style="display:none;">
   <div class="sync">
@@ -1089,7 +1171,7 @@ function render(){
 
 // ---- 탭 전환 ----
 function switchTab(name){
-  ['calc','legal','ref','sync'].forEach(t=>{
+  ['calc','legal','ref','parking','sync'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
     document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
   });
@@ -1179,6 +1261,40 @@ async function fetchRef(target, query, statusId, resultId){
   }catch(e){
     statusEl.textContent = '검색 실패: 네트워크 또는 서버 상태를 확인하세요.';
     renderRefList(target, [], resultId);
+  }
+}
+
+async function searchParking(){
+  const query = document.getElementById('parkingQuery').value.trim();
+  if (!query){ document.getElementById('parkingStatus').textContent = '검색어를 입력하세요.'; return; }
+  const statusEl = document.getElementById('parkingStatus');
+  statusEl.textContent = '검색 중...';
+  document.getElementById('parkingResults').innerHTML = '';
+  try{
+    const [deccRes, precRes] = await Promise.all([
+      fetch(`${SYNC_SERVER}/legal-search?target=ttSpecialDecc&query=${encodeURIComponent(query)}&display=6`),
+      fetch(`${SYNC_SERVER}/legal-search?target=prec&query=${encodeURIComponent(query)}&display=4`)
+    ]);
+    const deccData = await deccRes.json();
+    const precData = await precRes.json();
+    let deccItems = (deccData.Decc && deccData.Decc.decc) || [];
+    if (!Array.isArray(deccItems)) deccItems = [deccItems];
+    let precItems = (precData.PrecSearch && precData.PrecSearch.prec) || [];
+    if (!Array.isArray(precItems)) precItems = [precItems];
+    const deccTotal = (deccData.Decc && deccData.Decc.totalCnt) || 0;
+    const precTotal = (precData.PrecSearch && precData.PrecSearch.totalCnt) || 0;
+    statusEl.textContent = `조세심판원 ${deccTotal}건, 법원판례 ${precTotal}건 중 일부 표시`;
+    const deccHtml = deccItems.map(it=>{
+      const link = 'https://www.law.go.kr' + it['행정심판재결례상세링크'];
+      return `<div class="legalItem"><a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a><div class="legalMeta"><b>${it['청구번호']||'-'}</b> · ${it['의결일자']||'-'} · 조세심판원</div></div>`;
+    }).join('');
+    const precHtml = precItems.map(it=>{
+      const link = 'https://www.law.go.kr' + it['판례상세링크'];
+      return `<div class="legalItem"><a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a><div class="legalMeta"><b>${it['사건번호']||'-'}</b> · ${it['선고일자']||'-'}</div></div>`;
+    }).join('');
+    document.getElementById('parkingResults').innerHTML = deccHtml + precHtml || '<div style="font-size:13px;color:var(--soil-500);">검색 결과가 없습니다.</div>';
+  }catch(e){
+    statusEl.textContent = '검색 실패: 네트워크 또는 서버 상태를 확인하세요.';
   }
 }
 
