@@ -1307,22 +1307,34 @@ async function fetchRef(target, query, statusId, resultId){
   const statusEl = document.getElementById(statusId);
   statusEl.textContent = '검색 중...';
   try{
-    const res = await fetch(`${SYNC_SERVER}/legal-search?target=${target}&query=${encodeURIComponent(query)}&display=5`);
-    if (!res.ok) throw new Error('요청 실패');
-    const data = await res.json();
-    const rootKey = target === 'ttSpecialDecc' ? 'Decc' : (target === 'prec' ? 'PrecSearch' : 'Expc');
-    const itemKey = target === 'ttSpecialDecc' ? 'decc' : (target === 'prec' ? 'prec' : 'expc');
-    const root = data[rootKey] || {};
-    let items = root[itemKey];
-    if (!items) items = [];
-    if (!Array.isArray(items)) items = [items];
-    const total = root.totalCnt || items.length;
-    statusEl.textContent = `총 ${total}건 중 ${items.length}건`;
-    renderRefList(target, items, resultId);
+    const candidates = buildSearchCandidates(query);
+    let used = null, result = null;
+    for (const cand of candidates){
+      const r = await fetchLegalOnce(target, cand, 5);
+      if (r.total > 0){ used = cand; result = r; break; }
+    }
+    if (!result){
+      statusEl.textContent = '관련 자료가 검색되지 않았습니다.';
+      renderRefList(target, [], resultId);
+      return;
+    }
+    const note = (used !== query) ? ` (재검색어: "${used}")` : '';
+    statusEl.textContent = `총 ${result.total}건 중 ${result.items.length}건${note}`;
+    renderRefList(target, result.items, resultId);
   }catch(e){
     statusEl.textContent = '검색 실패: 네트워크 또는 서버 상태를 확인하세요.';
     renderRefList(target, [], resultId);
   }
+}
+
+async function fetchLegalMerged(target, query, display){
+  // buildSearchCandidates로 첫 성공 후보를 찾아 반환
+  const candidates = buildSearchCandidates(query);
+  for (const cand of candidates){
+    const r = await fetchLegalOnce(target, cand, display);
+    if (r.total > 0) return {...r, used: cand};
+  }
+  return {total: 0, items: [], used: query};
 }
 
 async function searchParking(){
@@ -1332,28 +1344,24 @@ async function searchParking(){
   statusEl.textContent = '검색 중...';
   document.getElementById('parkingResults').innerHTML = '';
   try{
-    const [deccRes, precRes] = await Promise.all([
-      fetch(`${SYNC_SERVER}/legal-search?target=ttSpecialDecc&query=${encodeURIComponent(query)}&display=6`),
-      fetch(`${SYNC_SERVER}/legal-search?target=prec&query=${encodeURIComponent(query)}&display=4`)
+    const [decc, prec] = await Promise.all([
+      fetchLegalMerged('ttSpecialDecc', query, 6),
+      fetchLegalMerged('prec', query, 4)
     ]);
-    const deccData = await deccRes.json();
-    const precData = await precRes.json();
-    let deccItems = (deccData.Decc && deccData.Decc.decc) || [];
-    if (!Array.isArray(deccItems)) deccItems = [deccItems];
-    let precItems = (precData.PrecSearch && precData.PrecSearch.prec) || [];
-    if (!Array.isArray(precItems)) precItems = [precItems];
-    const deccTotal = (deccData.Decc && deccData.Decc.totalCnt) || 0;
-    const precTotal = (precData.PrecSearch && precData.PrecSearch.totalCnt) || 0;
-    statusEl.textContent = `조세심판원 ${deccTotal}건, 법원판례 ${precTotal}건 중 일부 표시`;
-    const deccHtml = deccItems.map(it=>{
+    const noteParts = [];
+    if (decc.used !== query && decc.total > 0) noteParts.push(`조세심판원 재검색어 "${decc.used}"`);
+    if (prec.used !== query && prec.total > 0) noteParts.push(`법원판례 재검색어 "${prec.used}"`);
+    const note = noteParts.length ? ` (${noteParts.join(', ')})` : '';
+    statusEl.textContent = `조세심판원 ${decc.total}건, 법원판례 ${prec.total}건 중 일부 표시${note}`;
+    const deccHtml = decc.items.map(it=>{
       const link = 'https://www.law.go.kr' + it['행정심판재결례상세링크'];
       return `<div class="legalItem"><a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a><div class="legalMeta"><b>${it['청구번호']||'-'}</b> · ${it['의결일자']||'-'} · 조세심판원</div></div>`;
     }).join('');
-    const precHtml = precItems.map(it=>{
+    const precHtml = prec.items.map(it=>{
       const link = 'https://www.law.go.kr' + it['판례상세링크'];
       return `<div class="legalItem"><a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a><div class="legalMeta"><b>${it['사건번호']||'-'}</b> · ${it['선고일자']||'-'}</div></div>`;
     }).join('');
-    document.getElementById('parkingResults').innerHTML = deccHtml + precHtml || '<div style="font-size:13px;color:var(--soil-500);">검색 결과가 없습니다.</div>';
+    document.getElementById('parkingResults').innerHTML = (deccHtml + precHtml) || '<div style="font-size:13px;color:var(--soil-500);">검색 결과가 없습니다.</div>';
   }catch(e){
     statusEl.textContent = '검색 실패: 네트워크 또는 서버 상태를 확인하세요.';
   }
@@ -1388,37 +1396,55 @@ function setLegalStatus(msg){
   document.getElementById('legalStatus').textContent = msg;
 }
 
+async function fetchLegalOnce(target, query, display){
+  const res = await fetch(`${SYNC_SERVER}/legal-search?target=${target}&query=${encodeURIComponent(query)}&display=${display}`);
+  if (!res.ok) throw new Error('요청 실패: ' + res.status);
+  const data = await res.json();
+  const root = target === 'ttSpecialDecc' ? data.Decc : (target === 'prec' ? data.PrecSearch : data.Expc);
+  let items = root ? (target === 'ttSpecialDecc' ? root.decc : (target === 'prec' ? root.prec : root.expc)) : null;
+  if (!items) items = [];
+  if (!Array.isArray(items)) items = [items];
+  const total = root ? Number(root.totalCnt || 0) : 0;
+  return {total, items};
+}
+
+// 검색어 후보 생성: 원문 그대로 → 앞쪽 단어부터 하나씩 줄인 구절 → 개별 단어(긴 것부터)
+// (법제처 API가 여러 단어를 모두 포함해야 찾는 방식이라, 원문이 0건이면 자동으로 범위를 넓혀 재검색)
+function buildSearchCandidates(rawQuery){
+  const words = rawQuery.split(/\s+/).filter(Boolean);
+  const candidates = [rawQuery];
+  if (words.length > 1){
+    for (let n = words.length - 1; n >= 1; n--){
+      const phrase = words.slice(0, n).join(' ');
+      if (!candidates.includes(phrase)) candidates.push(phrase);
+    }
+    words.slice().sort((a,b)=>b.length-a.length).forEach(w=>{
+      if (!candidates.includes(w)) candidates.push(w);
+    });
+  }
+  return candidates;
+}
+
 async function searchLegal(){
-  const query = document.getElementById('legalQuery').value.trim();
-  if (!query){ setLegalStatus('검색어를 입력하세요.'); return; }
+  const rawQuery = document.getElementById('legalQuery').value.trim();
+  if (!rawQuery){ setLegalStatus('검색어를 입력하세요.'); return; }
   setLegalStatus('검색 중...');
   document.getElementById('legalResults').innerHTML = '';
+  const target = currentLegalSource;
+  const candidates = buildSearchCandidates(rawQuery);
   try{
-    const res = await fetch(`${SYNC_SERVER}/legal-search?target=${currentLegalSource}&query=${encodeURIComponent(query)}&display=10`);
-    if (!res.ok) throw new Error('요청 실패');
-    const data = await res.json();
-    const root = currentLegalSource === 'ttSpecialDecc' ? data.Decc : data.PrecSearch;
-    if (!root){ setLegalStatus('검색 결과가 없습니다.'); return; }
-    let items = currentLegalSource === 'ttSpecialDecc' ? root.decc : root.prec;
-    if (!items){ setLegalStatus('검색 결과가 없습니다.'); return; }
-    if (!Array.isArray(items)) items = [items];
-    const total = root.totalCnt || items.length;
-    setLegalStatus(`총 ${total}건 중 ${items.length}건 표시`);
-    document.getElementById('legalResults').innerHTML = items.map(it=>{
-      if (currentLegalSource === 'ttSpecialDecc'){
-        const link = 'https://www.law.go.kr' + it['행정심판재결례상세링크'];
-        return `<div class="legalItem">
-          <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
-          <div class="legalMeta">청구번호 ${it['청구번호'] || '-'} · 의결일자 ${it['의결일자'] || '-'} · 조세심판원</div>
-        </div>`;
-      } else {
-        const link = 'https://www.law.go.kr' + it['판례상세링크'];
-        return `<div class="legalItem">
-          <a href="${link}" target="_blank" rel="noopener">${it['사건명']}</a>
-          <div class="legalMeta">사건번호 ${it['사건번호'] || '-'} · 선고일자 ${it['선고일자'] || '-'}</div>
-        </div>`;
-      }
-    }).join('');
+    let used = null, result = null;
+    for (const cand of candidates){
+      const r = await fetchLegalOnce(target, cand, 10);
+      if (r.total > 0){ used = cand; result = r; break; }
+    }
+    if (!result){
+      setLegalStatus(`"${rawQuery}"(단어를 줄여 재검색해도) 결과가 없습니다. 다른 표현으로 다시 시도해보세요.`);
+      return;
+    }
+    const note = (used !== rawQuery) ? ` — 정확한 문구로는 결과가 없어 "${used}"(으)로 자동 재검색됨` : '';
+    setLegalStatus(`총 ${result.total}건 중 ${result.items.length}건 표시${note}`);
+    renderRefList(target, result.items, 'legalResults');
   }catch(e){
     setLegalStatus('검색 실패: 네트워크 또는 서버 상태를 확인하세요.');
   }
