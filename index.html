@@ -824,6 +824,8 @@ async function runLandCheck(){
       </div>
     `;
     window.__lcLastResult = {d, jimok, isCityZone, suggestedType, zoneNames, others, area, areaCd, latestPrice, addr};
+    // 조회 즉시 자동으로 ①번 판정에 반영 (버튼을 눌러야만 반영되던 것을 자동화)
+    applyLandCheckResult({jimok, isCityZone, suggestedType}, true);
     window.__lcCompResult = null;
   }catch(e){
     document.getElementById('lcStatus').textContent = '조회 실패: ' + e.message + ' — 모바일에서 반복 실패 시: ①브라우저 새로고침(캐시 문제일 수 있음) ②와이파이↔데이터 전환 후 재시도 ③잠시 후 다시 시도';
@@ -1014,18 +1016,22 @@ function openBrochureLC(){
   w.document.close();
 }
 
-function applyLandCheckResult(info){
+function applyLandCheckResult(info, auto){
   if (info.suggestedType && TYPE_CONFIGS[info.suggestedType]){
     document.getElementById('landType').value = info.suggestedType;
     onLandTypeChange();
   }
   const type = document.getElementById('landType').value;
+  let cityApplied = false;
   if (type === 'farm'){
     const radio = document.querySelector(`input[name="farm_city"][value="${info.isCityZone ? 'y' : 'n'}"]`);
-    if (radio){ radio.checked = true; onTypeFieldChange(); }
+    if (radio){ radio.checked = true; onTypeFieldChange(); cityApplied = true; }
   }
-  document.getElementById('lcStatus').textContent = '① 판정에 반영했습니다. 재촌·자경 등 나머지 항목을 확인해주세요.';
-  document.querySelector('.blockTitle').scrollIntoView({behavior:'smooth', block:'start'});
+  const msg = cityApplied
+    ? '① 판정에 자동 반영했습니다 (도시지역 여부 포함). 재촌·자경 등 나머지 항목을 확인해주세요.'
+    : `① 판정에 반영했습니다. 이 토지유형(${TYPE_CONFIGS[type]?.label||type})은 용도지역을 직접 묻는 질문이 없어, 위 조회 결과(${info.isCityZone?'도시지역':'비도시지역'})를 참고해 해당 항목을 직접 답해주세요.`;
+  document.getElementById('lcStatus').textContent = msg;
+  if (!auto) document.querySelector('.blockTitle').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 // ============ 지목별 요건 정의 ============
