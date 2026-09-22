@@ -1663,7 +1663,9 @@ function render(){
       flatTax = flatRateTax(inputs, flatRatePct, o.share);
       if (flatTax > calc.totalTax){ ownerFinal = flatTax; flatApplied = true; }
     }
-    return {...o, calc, ownerFinal, flatApplied, flatTax};
+    const ownerProceeds = (inputs.transfer - inputs.expense) * o.share;
+    const netCash = ownerProceeds - ownerFinal;
+    return {...o, calc, ownerFinal, flatApplied, flatTax, ownerProceeds, netCash};
   });
 
   const aggGain = ownerResults.reduce((s,o)=>s+o.calc.gain,0);
@@ -1674,6 +1676,7 @@ function render(){
   const aggNationalTax = ownerResults.reduce((s,o)=>s+o.calc.nationalTax,0);
   const aggLocalTax = ownerResults.reduce((s,o)=>s+o.calc.localTax,0);
   const finalTotal = ownerResults.reduce((s,o)=>s+o.ownerFinal,0);
+  const netCashTotal = ownerResults.reduce((s,o)=>s+o.netCash,0);
   const deductRate = ownerResults.length ? ownerResults[0].calc.deductRate : 0;
 
   // 단기보유 특례 안내(전체 합산 기준 메시지)
@@ -1702,6 +1705,8 @@ function render(){
     <div class="brow"><span class="k">양도소득세 합계 (인별 산출세액의 합)</span><span class="v">${won(aggNationalTax)}원</span></div>
     <div class="brow"><span class="k">지방소득세 합계 (10%)</span><span class="v">${won(aggLocalTax)}원</span></div>
     <div class="brow total"><span class="k">총 납부세액</span><span class="v">${won(finalTotal)}원</span></div>
+    <div class="brow" style="margin-top:6px;padding-top:14px;border-top:1px solid rgba(255,255,255,.22);"><span class="k">양도대금 (양도가액 − 필요경비)</span><span class="v">${won(inputs.transfer - inputs.expense)}원</span></div>
+    <div class="brow total"><span class="k">양도 후 실수령액 (세후 현금)</span><span class="v" style="color:#BEE3D0;">${won(netCashTotal)}원</span></div>
   `;
 
   // 인별 세액표 (공동명의인 경우에만 표시)
@@ -1709,7 +1714,7 @@ function render(){
   if (jointOn && owners.length > 1){
     ownerWrap.style.display = 'block';
     document.getElementById('ownerTable').innerHTML = `
-      <thead><tr><th>공유자</th><th>지분율</th><th>양도차익</th><th>과세표준</th><th>산출세액(지방세 포함)</th></tr></thead>
+      <thead><tr><th>공유자</th><th>지분율</th><th>양도차익</th><th>과세표준</th><th>산출세액(지방세 포함)</th><th>실수령액(세후)</th></tr></thead>
       <tbody>
         ${ownerResults.map(o=>`
           <tr>
@@ -1718,10 +1723,11 @@ function render(){
             <td>${won(o.calc.gain)}원</td>
             <td>${won(o.calc.taxBase)}원</td>
             <td>${won(o.ownerFinal)}원</td>
+            <td style="color:#BEE3D0;">${won(o.netCash)}원</td>
           </tr>
         `).join('')}
       </tbody>
-      <tfoot><tr><td colspan="4">합계</td><td>${won(finalTotal)}원</td></tr></tfoot>
+      <tfoot><tr><td colspan="4">합계</td><td>${won(finalTotal)}원</td><td style="color:#F3E9D2;">${won(netCashTotal)}원</td></tr></tfoot>
     `;
   } else {
     ownerWrap.style.display = 'none';
