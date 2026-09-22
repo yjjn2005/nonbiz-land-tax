@@ -734,16 +734,31 @@ async function lcNed(op, params){
   try{
     const base = "https://api.vworld.kr/ned/data/" + op;
     const p = {key: LC_VWORLD_KEY, domain: LC_DOMAIN, format: "json", numOfRows: "100", ...params};
-    return await lcJsonp(base, p);
+    return await lcJsonp(base, p, 15000);
   }catch(e){ errs.push("jsonp:" + e.message); }
   throw new Error(op + " 실패 (" + errs.join(", ") + ")");
 }
 async function lcSearchParcel(q){
   const p = {service:"search", request:"search", version:"2.0", crs:"EPSG:4326", query:q, type:"address", category:"PARCEL", format:"json", key: LC_VWORLD_KEY};
-  let d;
-  try{ d = await lcJsonp("https://api.vworld.kr/req/search", p, 10000); }
-  catch(e){ d = await lcTryFetch(LC_PROXY + "/vworld/search", {query:q}); }
-  if (d.response?.status !== "OK") throw new Error("주소를 찾을 수 없습니다 (" + (d.response?.status || "오류") + ")");
+  const errs = [];
+  let d = null;
+  // PC 브라우저는 브이월드 직접 호출(JSONP)이 안정적으로 성공하므로 이를 우선 시도.
+  // 모바일 네트워크는 지연이 길 수 있어 타임아웃을 넉넉히 주고 1회 재시도.
+  for (let attempt = 0; attempt < 2 && !d; attempt++){
+    try{
+      const direct = await lcJsonp("https://api.vworld.kr/req/search", p, 15000);
+      if (direct?.response?.status === "OK") d = direct;
+      else errs.push(`direct#${attempt}:status=` + (direct?.response?.status || "unknown"));
+    }catch(e){ errs.push(`direct#${attempt}:` + e.message); }
+  }
+  if (!d){
+    try{
+      const viaProxy = await lcTryFetch(LC_PROXY + "/vworld/search", {query:q});
+      if (viaProxy?.response?.status === "OK") d = viaProxy;
+      else errs.push("proxy:status=" + (viaProxy?.response?.status || "unknown"));
+    }catch(e){ errs.push("proxy:" + e.message); }
+  }
+  if (!d) throw new Error("주소를 찾을 수 없습니다 (" + errs.join(", ") + ")");
   return d.response.result?.items || [];
 }
 async function lcLoadParcelData(q){
@@ -811,7 +826,7 @@ async function runLandCheck(){
     window.__lcLastResult = {d, jimok, isCityZone, suggestedType, zoneNames, others, area, areaCd, latestPrice, addr};
     window.__lcCompResult = null;
   }catch(e){
-    document.getElementById('lcStatus').textContent = '조회 실패: ' + e.message + ' (브이월드 서비스 상태 또는 주소 표기를 확인해주세요)';
+    document.getElementById('lcStatus').textContent = '조회 실패: ' + e.message + ' — 모바일에서 반복 실패 시: ①브라우저 새로고침(캐시 문제일 수 있음) ②와이파이↔데이터 전환 후 재시도 ③잠시 후 다시 시도';
   }
 }
 
