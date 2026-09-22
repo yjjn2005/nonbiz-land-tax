@@ -356,8 +356,8 @@
         </div>
         <div class="field">
           <label for="bizYears">그중 위 "사업용 요건"을 충족한 기간</label>
-          <input type="number" id="bizYears" placeholder="자동 제안됨" min="0" max="70" step="0.5">
-          <div class="unit">연 단위. 위 요건 체크 결과에 따라 자동 제안되며 직접 수정 가능</div>
+          <input type="number" id="bizYears" placeholder="예: 12" min="0" max="70" step="0.5">
+          <div class="unit">연 단위. 전체 소유기간과 마찬가지로 직접 입력</div>
         </div>
       </div>
     </div>
@@ -1301,9 +1301,8 @@ function getTypeFieldValues(){
   return v;
 }
 
-let bizYearsManuallyEdited = false;
 document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('bizYears').addEventListener('input', ()=>{ bizYearsManuallyEdited = true; render(); });
+  document.getElementById('bizYears').addEventListener('input', render);
 });
 
 function onTypeFieldChange(){
@@ -1322,20 +1321,9 @@ function onTypeFieldChange(){
 
   document.getElementById('categoryNote').textContent =
     isBiz
-      ? '현재 요건 기준: 사업용 카테고리에 해당 (아래 "사업용 요건 충족 기간"의 기본값이 전체 소유기간으로 제안됩니다)'
-      : '현재 요건 기준: 비사업용 카테고리에 해당 (아래 "사업용 요건 충족 기간"의 기본값이 0으로 제안됩니다)';
+      ? '현재 요건 기준: 사업용 카테고리에 해당'
+      : '현재 요건 기준: 비사업용 카테고리에 해당';
 
-  if (!bizYearsManuallyEdited){
-    const yearsRaw = document.getElementById('years').value;
-    if (yearsRaw === ''){
-      document.getElementById('bizYears').value = '';
-    } else {
-      const years = Number(yearsRaw) || 0;
-      const months = Number(document.getElementById('months').value) || 0;
-      const totalYears = years + months/12;
-      document.getElementById('bizYears').value = isBiz ? Math.round(totalYears*10)/10 : 0;
-    }
-  }
   render();
 }
 
@@ -1664,24 +1652,7 @@ function render(){
 }
 
 ['acquire','transfer','expense','years','months'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', ()=>{
-    if (!bizYearsManuallyEdited){
-      const yearsRaw = document.getElementById('years').value;
-      if (yearsRaw === ''){
-        document.getElementById('bizYears').value = '';
-      } else {
-        const type = document.getElementById('landType').value;
-        const cfg = TYPE_CONFIGS[type];
-        const v = getTypeFieldValues();
-        const {isBiz} = cfg.judge(v);
-        const years = Number(yearsRaw) || 0;
-        const months = Number(document.getElementById('months').value) || 0;
-        const totalYears = years + months/12;
-        document.getElementById('bizYears').value = isBiz ? Math.round(totalYears*10)/10 : 0;
-      }
-    }
-    render();
-  });
+  document.getElementById(id).addEventListener('input', render);
   document.getElementById(id).addEventListener('change', render);
 });
 
@@ -1987,7 +1958,7 @@ async function loadFromCloud(){
       });
       onTypeFieldChange();
     }
-    if (data.bizYears !== undefined){ document.getElementById('bizYears').value = data.bizYears; bizYearsManuallyEdited = true; }
+    if (data.bizYears !== undefined){ document.getElementById('bizYears').value = data.bizYears; }
     if (data.overrideOn !== undefined) document.getElementById('overrideOn').checked = data.overrideOn;
     if (data.overrideValue) document.getElementById('overrideValue').value = data.overrideValue;
     if (data.jointOn !== undefined){
