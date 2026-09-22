@@ -389,11 +389,20 @@
           <label for="acquire">취득가액</label>
           <input type="number" id="acquire" value="300000000" min="0" step="1000000">
           <div class="unit">원</div>
+          <div class="row2" style="margin-top:8px;">
+            <input type="number" id="acquireYear" placeholder="취득연도 예: 2015" min="1990" max="2026" step="1">
+            <button class="syncBtn ghost" style="width:100%;font-size:12px;padding:9px 10px;" onclick="applyAcquirePriceFromYear()">그 해 공시지가로 계산</button>
+          </div>
+          <div class="unit" id="acquireYearHint">⓪번에서 지번을 먼저 조회해야 연도별 공시지가를 가져올 수 있습니다</div>
         </div>
         <div class="field">
           <label for="transfer">양도가액</label>
           <input type="number" id="transfer" value="700000000" min="0" step="1000000">
           <div class="unit">원</div>
+          <div class="row2" style="margin-top:8px;">
+            <button class="syncBtn ghost" style="width:100%;font-size:12px;padding:9px 10px;grid-column:1/3;" onclick="applyTransferPriceFromComp()">실거래가 기준 매도가능금액 반영</button>
+          </div>
+          <div class="unit" id="transferCompHint">⓪번에서 "인근 실거래가 비교"를 먼저 실행해야 반영할 수 있습니다</div>
         </div>
       </div>
       <div class="field">
@@ -1076,6 +1085,53 @@ async function loadBldTitleLC(){
   }catch(e){
     out.innerHTML = '<div style="font-size:13px;color:var(--soil-500);">조회 실패: ' + e.message + '</div>';
   }
+}
+
+// ---- 취득연도 공시지가로 취득가액 계산 / 실거래가로 양도가액 반영 ----
+function applyAcquirePriceFromYear(){
+  const hint = document.getElementById('acquireYearHint');
+  const r = window.__lcLastResult;
+  if (!r || !r.d || !r.d.prices || !r.d.prices.length){
+    hint.textContent = '⓪번에서 지번을 먼저 조회해야 연도별 공시지가를 가져올 수 있습니다.';
+    hint.style.color = 'var(--danger)';
+    return;
+  }
+  const yearInput = document.getElementById('acquireYear').value.trim();
+  if (!yearInput){ hint.textContent = '취득연도를 입력하세요.'; hint.style.color = 'var(--danger)'; return; }
+  const year = Number(yearInput);
+  let match = r.d.prices.find(p => Number(p.stdrYear) === year);
+  let note = '';
+  if (!match){
+    // 정확한 연도 데이터가 없으면 가장 가까운 연도로 대체
+    match = r.d.prices.slice().sort((a,b) => Math.abs(Number(a.stdrYear)-year) - Math.abs(Number(b.stdrYear)-year))[0];
+    note = ` (${year}년 데이터가 없어 가장 가까운 ${match.stdrYear}년 공시지가로 대체)`;
+  }
+  if (!match || !r.area){
+    hint.textContent = '해당 연도의 개별공시지가 데이터를 찾을 수 없습니다.';
+    hint.style.color = 'var(--danger)';
+    return;
+  }
+  const ppm = Number(match.pblntfPclnd);
+  const total = Math.round(ppm * r.area);
+  document.getElementById('acquire').value = total;
+  hint.innerHTML = `${match.stdrYear}년 공시지가 ㎡당 ${lcWon(ppm)} × ${lcNum(r.area,1)}㎡ = <b>${lcWon(total)}</b> 적용됨${note}. 실제 취득가액(매매계약서상 금액)과 다를 수 있어 참고용입니다.`;
+  hint.style.color = 'var(--soil-500)';
+  render();
+}
+
+function applyTransferPriceFromComp(){
+  const hint = document.getElementById('transferCompHint');
+  const comp = window.__lcCompResult;
+  if (!comp){
+    hint.textContent = '⓪번에서 "인근 실거래가 비교"를 먼저 실행해야 반영할 수 있습니다.';
+    hint.style.color = 'var(--danger)';
+    return;
+  }
+  const suggested = Math.round(comp.estTotal != null ? comp.estTotal : (comp.lowTotal + comp.highTotal) / 2);
+  document.getElementById('transfer').value = suggested;
+  hint.innerHTML = `인근 실거래 ㎡당 중앙값 ${lcWon(Math.round(comp.medPpm))} 기준 매도가능금액 <b>${lcWon(suggested)}</b> 적용됨 (참고범위 ${lcWon(Math.round(comp.lowTotal))}~${lcWon(Math.round(comp.highTotal))}). 실제 협상가와 다를 수 있어 참고용입니다.`;
+  hint.style.color = 'var(--soil-500)';
+  render();
 }
 
 function applyLandCheckResult(info, auto){
