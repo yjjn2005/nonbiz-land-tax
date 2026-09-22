@@ -303,7 +303,7 @@
     <div class="card">
       <div class="field">
         <div class="row2">
-          <input type="text" id="lcQuery" placeholder="예: 경기도 동두천시 상패동 69-3 (지번) 또는 도로명주소">
+          <input type="text" id="lcQuery" placeholder="예: 경기도 남양주시 화도읍 월산리 537 (지번) 또는 도로명주소" value="경기도 남양주시 화도읍 월산리 537">
           <button class="syncBtn" onclick="runLandCheck()" style="width:100%;">조회</button>
         </div>
         <div class="unit">국토교통부 토지이용규제정보·브이월드 API로 지목·용도지역·개별공시지가를 자동으로 가져와 아래 ①번 판정에 반영합니다 (land-check 앱과 동일한 데이터 소스)</div>
@@ -817,10 +817,13 @@ async function runLandCheck(){
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="syncBtn" onclick="applyLandCheckResult(${JSON.stringify({jimok, isCityZone, suggestedType}).replace(/"/g,'&quot;')})">이 결과를 ①번 판정에 적용</button>
           <button class="syncBtn ghost" onclick="runComparableTradesLC()">인근 실거래가 비교</button>
-          <button class="syncBtn ghost" onclick="openBrochureLC()">매도 브로셔 생성</button>
+          <button class="syncBtn ghost" onclick="loadBldTitleLC()">건축물대장 조회</button>
+          <button class="syncBtn ghost" id="lcBrochureBtn" onclick="toggleBrochureLC()">매도 브로셔 보기</button>
           <a href="https://yjjn2005.github.io/land-check/" target="_blank" rel="noopener" class="syncBtn ghost" style="text-decoration:none;display:inline-flex;align-items:center;">건폐율·용적률·행위제한 상세보기 →</a>
         </div>
         <div id="lcCompOut" style="margin-top:14px;"></div>
+        <div id="lcBldOut" style="margin-top:14px;"></div>
+        <div id="lcBrochureOut" style="margin-top:14px;"></div>
       </div>
     `;
     window.__lcLastResult = {d, jimok, isCityZone, suggestedType, zoneNames, others, area, areaCd, latestPrice, addr};
@@ -905,11 +908,7 @@ async function runComparableTradesLC(){
 }
 
 // ---- 매도 브로셔 (land-check 브로셔 + 비사업용 판정·예상 양도세 결합) ----
-function openBrochureLC(){
-  const r = window.__lcLastResult;
-  if (!r){ return; }
-  const w = window.open('', '_blank');
-  if (!w){ alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.'); return; }
+function buildBrochureHtml(r){
   const zone = r.zoneNames[0] || '-';
   const zr = LC_ZONE_RULES[zone];
   const ppm = r.latestPrice ? Number(r.latestPrice.pblntfPclnd) : null;
@@ -925,7 +924,7 @@ function openBrochureLC(){
   const headlineTax = document.getElementById('headlineTax')?.textContent?.trim() || '';
   const headlineSub = document.getElementById('headlineSub')?.textContent?.trim() || '';
 
-  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
   <title>토지 매매 소개 — ${r.addr}</title>
   <style>
     @page{ size:A4; margin:16mm; }
@@ -948,11 +947,8 @@ function openBrochureLC(){
     .taxbox{background:#FAF6EC;border:1px solid #e3d3a3;border-radius:8px;padding:14px 16px;margin-top:8px}
     .taxbox .v{font-size:20px;font-weight:800;color:#8c1e17}
     .foot{margin-top:24px;font-size:11px;color:#999;border-top:1px solid #E0DCD3;padding-top:10px;line-height:1.6}
-    .toolbar{max-width:800px;margin:10px auto;text-align:right}
-    .toolbar button{padding:10px 18px;background:#17221D;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer}
-    @media print{ .toolbar{display:none} body{background:#fff} }
+    @media print{ body{background:#fff} }
   </style></head><body>
-  <div class="toolbar"><button onclick="window.print()">인쇄 / PDF로 저장</button></div>
   <div class="sheet">
     <div class="hero">
       <span class="tag">매매 안내</span>
@@ -1012,8 +1008,74 @@ function openBrochureLC(){
     </div>
   </div>
   </body></html>`;
-  w.document.write(html);
-  w.document.close();
+}
+
+function toggleBrochureLC(){
+  const out = document.getElementById('lcBrochureOut');
+  const btn = document.getElementById('lcBrochureBtn');
+  if (out.innerHTML.trim()){
+    out.innerHTML = '';
+    btn.textContent = '매도 브로셔 보기';
+    return;
+  }
+  const r = window.__lcLastResult;
+  if (!r) return;
+  const html = buildBrochureHtml(r);
+  out.innerHTML = `
+    <div style="border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--wheat-100);border-bottom:1px solid var(--line);">
+        <span style="font-size:13px;font-weight:700;color:var(--soil-700);">매도 브로셔 미리보기</span>
+        <div style="display:flex;gap:8px;">
+          <button class="syncBtn" style="padding:6px 12px;font-size:12px;" onclick="printBrochureLC()">인쇄 / PDF</button>
+          <button class="syncBtn ghost" style="padding:6px 12px;font-size:12px;" onclick="toggleBrochureLC()">닫기</button>
+        </div>
+      </div>
+      <iframe id="lcBrochureFrame" style="width:100%;height:640px;border:none;display:block;background:#fff;" srcdoc="${html.replace(/"/g,'&quot;')}"></iframe>
+    </div>
+  `;
+  btn.textContent = '브로셔 닫기';
+}
+
+function printBrochureLC(){
+  const f = document.getElementById('lcBrochureFrame');
+  if (f && f.contentWindow) f.contentWindow.print();
+}
+
+// ---- 건축물대장(표제부) 조회 ----
+const LC_BLD_LABELS = {
+  bldNm: '건물명', mainPurpsCdNm: '주용도', etcPurps: '기타용도', strctCdNm: '구조', roofCdNm: '지붕',
+  heit: '높이(m)', grndFlrCnt: '지상층수', ugrndFlrCnt: '지하층수', hoCnt: '호수', fmlyCnt: '세대수',
+  platArea: '대지면적(㎡)', archArea: '건축면적(㎡)', bcRat: '건폐율(%)', totArea: '연면적(㎡)', vlRat: '용적률(%)',
+  useAprDay: '사용승인일', pmsDay: '허가일', stcnsDay: '착공일', crtnDay: '생성일자',
+  regstrKindCdNm: '대장구분', regstrGbCdNm: '대장종류', platPlc: '대지위치', newPlatPlc: '도로명대지위치'
+};
+function lcBldLabel(k){ return LC_BLD_LABELS[k] || k; }
+
+async function loadBldTitleLC(){
+  const r = window.__lcLastResult;
+  if (!r) return;
+  const out = document.getElementById('lcBldOut');
+  out.innerHTML = '<div style="font-size:13px;color:var(--soil-500);">건축물대장 조회 중...</div>';
+  try{
+    const data = await lcTryFetch(LC_PROXY + '/molit/bld-title', {pnu: r.d.pnu});
+    const items = data.items || [];
+    if (!items.length){
+      out.innerHTML = '<div style="font-size:13px;color:var(--soil-500);">건축물대장에 등록된 건축물이 없습니다 (나대지·무허가 건축물이거나 미등재일 수 있음).</div>';
+      return;
+    }
+    const keyOrder = ['bldNm','mainPurpsCdNm','etcPurps','strctCdNm','roofCdNm','grndFlrCnt','ugrndFlrCnt','heit','hoCnt','fmlyCnt','platArea','archArea','bcRat','totArea','vlRat','useAprDay','pmsDay','stcnsDay'];
+    out.innerHTML = items.map((it,idx) => {
+      const rows = keyOrder.filter(k => it[k] !== undefined && it[k] !== '').map(k =>
+        `<tr><td>${lcBldLabel(k)}</td><td>${it[k]}</td></tr>`
+      ).join('');
+      return `<div style="background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">${items.length>1?`동 ${idx+1} · `:''}${it.bldNm || it.platPlc || '건축물'}</div>
+        <table style="font-size:12.5px;"><tbody>${rows}</tbody></table>
+      </div>`;
+    }).join('');
+  }catch(e){
+    out.innerHTML = '<div style="font-size:13px;color:var(--soil-500);">조회 실패: ' + e.message + '</div>';
+  }
 }
 
 function applyLandCheckResult(info, auto){
