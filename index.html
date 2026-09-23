@@ -290,6 +290,7 @@
 
   <nav class="tabnav">
     <button class="tabbtn active" data-tab="calc" onclick="switchTab('calc')">직접계산</button>
+    <button class="tabbtn" data-tab="bizonly" onclick="switchTab('bizonly')">사업용 양도세</button>
     <button class="tabbtn" data-tab="legal" onclick="switchTab('legal')">조세심판원 판례검색</button>
     <button class="tabbtn" data-tab="ref" onclick="switchTab('ref')">지목별 근거자료</button>
     <button class="tabbtn" data-tab="parking" onclick="switchTab('parking')">노외주차장 판례</button>
@@ -490,6 +491,86 @@
     <div class="diff" id="diffLine"></div>
   </div>
   </div><!-- /tab-calc -->
+
+  <div class="tabpanel" id="tab-bizonly" style="display:none;">
+  <section class="block">
+    <div class="blockTitle">사업용 토지 양도세 간편계산 <span style="font-weight:400;font-size:13px;color:var(--soil-500);margin-left:8px;">— 이미 사업용으로 확정된 토지를 판정 질문 없이 바로 계산</span></div>
+    <div class="notice" style="margin-top:0;">
+      이 탭은 해당 토지가 <b>사업용 토지임을 이미 알고 있는 경우</b> 판정 절차 없이 바로 양도세를 계산합니다. 가산세율 없이 기본세율(6~45%)과 정상적인 장기보유특별공제(3년 이상, 연 2%씩 최대 30%)만 적용됩니다. 판정이 필요하면 "직접계산" 탭을 이용하세요.
+    </div>
+
+    <div class="card">
+      <h3>양도 정보</h3>
+      <div class="grid2">
+        <div class="field">
+          <label for="b2_acquire">취득가액</label>
+          <input type="number" id="b2_acquire" value="300000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+        <div class="field">
+          <label for="b2_transfer">양도가액</label>
+          <input type="number" id="b2_transfer" value="700000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="b2_expense">필요경비 (취득세·중개보수·자본적지출 등)</label>
+        <input type="number" id="b2_expense" value="15000000" min="0" step="500000">
+        <div class="unit">원</div>
+      </div>
+      <div class="field">
+        <label for="b2_years">보유기간</label>
+        <div class="row2">
+          <input type="number" id="b2_years" placeholder="예: 12" min="0" max="70" step="1">
+          <select id="b2_months">
+            <option value="0" selected>0개월</option>
+            <option value="1">1개월</option><option value="2">2개월</option>
+            <option value="3">3개월</option><option value="4">4개월</option>
+            <option value="5">5개월</option><option value="6">6개월</option>
+            <option value="7">7개월</option><option value="8">8개월</option>
+            <option value="9">9개월</option><option value="10">10개월</option>
+            <option value="11">11개월</option>
+          </select>
+        </div>
+        <div class="unit">취득일부터 양도일까지 (만 연수로 절사)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>공동 지분 정보 (선택)</h3>
+      <div class="field">
+        <label class="chk" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="b2_jointOn" onchange="b2OnJointToggle()" style="width:auto;">
+          공동명의(지분 소유)입니다 — 최대 5명까지 인별로 양도세를 각각 계산합니다
+        </label>
+      </div>
+      <div id="b2_jointFields" style="display:none;">
+        <div class="field">
+          <label for="b2_ownerCount">공유자 수</label>
+          <select id="b2_ownerCount" onchange="b2OnOwnerCountChange()">
+            <option value="2">2명</option>
+            <option value="3">3명</option>
+            <option value="4">4명</option>
+            <option value="5">5명</option>
+          </select>
+        </div>
+        <div id="b2_ownerRows"></div>
+        <div id="b2_ownerShareTotal" style="font-size:13px;margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="label">예상 양도소득세 (지방소득세 포함, 사업용 일반세율)</div>
+      <div class="headline" id="b2_headlineTax">0<span>원</span></div>
+      <div class="subline" id="b2_headlineSub"></div>
+      <div class="breakdown" id="b2_breakdown"></div>
+      <div id="b2_ownerBreakdownWrap" style="display:none;">
+        <table class="ownerTable" id="b2_ownerTable"></table>
+      </div>
+      <div class="shortNote" id="b2_shortNote" style="display:none;"></div>
+    </div>
+  </section>
+  </div><!-- /tab-bizonly -->
 
   <div class="tabpanel" id="tab-legal" style="display:none;">
   <!-- ===================== 판례·심판례 검색 ===================== -->
@@ -1586,6 +1667,166 @@ function getOwners(){
   return owners;
 }
 
+// ============ 사업용 양도세 간편계산 탭 (판정 없이 항상 사업용으로 계산) ============
+function b2OnJointToggle(){
+  const on = document.getElementById('b2_jointOn').checked;
+  document.getElementById('b2_jointFields').style.display = on ? 'block' : 'none';
+  if (on) b2OnOwnerCountChange(); else b2Render();
+}
+
+function b2OnOwnerCountChange(){
+  const count = Number(document.getElementById('b2_ownerCount').value) || 2;
+  const base = Math.floor((100/count) * 100) / 100;
+  const rowsHtml = [];
+  for (let i=1; i<=count; i++){
+    const defaultShare = (i < count) ? base : Math.round((100 - base*(count-1)) * 100) / 100;
+    rowsHtml.push(`
+      <div class="ownerRow">
+        <div class="field" style="margin-bottom:0;">
+          <label>공유자 ${i} 성명(선택)</label>
+          <input type="text" id="b2_owner_name_${i}" placeholder="공유자${i}" oninput="b2Render()">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>지분율(%)</label>
+          <input type="number" id="b2_owner_share_${i}" value="${defaultShare}" min="0" max="100" step="0.01" oninput="b2UpdateOwnerShareTotal(); b2Render();">
+        </div>
+      </div>
+    `);
+  }
+  document.getElementById('b2_ownerRows').innerHTML = rowsHtml.join('');
+  b2UpdateOwnerShareTotal();
+  b2Render();
+}
+
+function b2UpdateOwnerShareTotal(){
+  const count = Number(document.getElementById('b2_ownerCount').value) || 2;
+  let sum = 0;
+  for (let i=1; i<=count; i++){
+    const el = document.getElementById('b2_owner_share_'+i);
+    if (el) sum += Number(el.value) || 0;
+  }
+  const diff = Math.round((sum - 100) * 100) / 100;
+  const el = document.getElementById('b2_ownerShareTotal');
+  el.innerHTML = (Math.abs(diff) < 0.01)
+    ? `<span class="ownerShareOk">지분 합계 ${sum.toFixed(2)}% — 정상</span>`
+    : `<span class="ownerShareWarn">지분 합계 ${sum.toFixed(2)}% — 100%가 되도록 조정하세요</span>`;
+}
+
+function b2GetOwners(){
+  const jointOn = document.getElementById('b2_jointOn').checked;
+  if (!jointOn) return [{name:'', share:1}];
+  const count = Number(document.getElementById('b2_ownerCount').value) || 2;
+  const owners = [];
+  for (let i=1; i<=count; i++){
+    const nameEl = document.getElementById('b2_owner_name_'+i);
+    const shareEl = document.getElementById('b2_owner_share_'+i);
+    const name = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : ('공유자'+i);
+    const share = shareEl ? (Number(shareEl.value) || 0) / 100 : 0;
+    owners.push({name, share});
+  }
+  return owners;
+}
+
+function b2GetInputs(){
+  return {
+    acquire: Number(document.getElementById('b2_acquire').value) || 0,
+    transfer: Number(document.getElementById('b2_transfer').value) || 0,
+    expense: Number(document.getElementById('b2_expense').value) || 0
+  };
+}
+
+function b2Render(){
+  const inputs = b2GetInputs();
+  const years = Number(document.getElementById('b2_years').value) || 0;
+  const months = Number(document.getElementById('b2_months').value) || 0;
+  const ownYears = years + months/12;
+  const wholeYears = Math.floor(ownYears);
+  const jointOn = document.getElementById('b2_jointOn').checked;
+  const owners = b2GetOwners();
+
+  const ownerResults = owners.map(o => {
+    // isBiz=true, surcharge=0 고정 — 항상 사업용 일반세율
+    const calc = computeFor(true, 0, true, inputs, wholeYears, o.share);
+    let ownerFinal = calc.totalTax;
+    let flatApplied = false, flatTax = 0;
+    if (wholeYears < 2){
+      const flatRatePct = wholeYears < 1 ? 0.50 : 0.40;
+      flatTax = flatRateTax(inputs, flatRatePct, o.share);
+      if (flatTax > calc.totalTax){ ownerFinal = flatTax; flatApplied = true; }
+    }
+    const ownerProceeds = (inputs.transfer - inputs.expense) * o.share;
+    const netCash = ownerProceeds - ownerFinal;
+    return {...o, calc, ownerFinal, flatApplied, flatTax, netCash};
+  });
+
+  const aggGain = ownerResults.reduce((s,o)=>s+o.calc.gain,0);
+  const aggLtcgDeduct = ownerResults.reduce((s,o)=>s+o.calc.ltcgDeduct,0);
+  const aggAfterLtcg = ownerResults.reduce((s,o)=>s+o.calc.afterLtcg,0);
+  const aggBasicDeduct = ownerResults.reduce((s,o)=>s+o.calc.basicDeduct,0);
+  const aggTaxBase = ownerResults.reduce((s,o)=>s+o.calc.taxBase,0);
+  const aggNationalTax = ownerResults.reduce((s,o)=>s+o.calc.nationalTax,0);
+  const aggLocalTax = ownerResults.reduce((s,o)=>s+o.calc.localTax,0);
+  const finalTotal = ownerResults.reduce((s,o)=>s+o.ownerFinal,0);
+  const netCashTotal = ownerResults.reduce((s,o)=>s+o.netCash,0);
+  const deductRate = ownerResults.length ? ownerResults[0].calc.deductRate : 0;
+
+  let shortNoteHtml = '';
+  if (wholeYears < 2){
+    const anyFlat = ownerResults.some(o=>o.flatApplied);
+    shortNoteHtml = anyFlat
+      ? `단기보유 특례: 소유기간 ${wholeYears<1?'1년 미만(50%)':'2년 미만(40%)'} 단일세율이 일부(또는 전체) 공유자에게 더 유리하게 적용되어, 최종 합계는 <b>${won(finalTotal)}원</b>입니다.`
+      : `단기보유 특례(${wholeYears<1?'1년 미만 50%':'2년 미만 40%'} 단일세율)와 비교했으나, 인별 누진세액이 더 커 그대로 적용됩니다.`;
+  }
+  document.getElementById('b2_shortNote').style.display = shortNoteHtml ? 'block' : 'none';
+  document.getElementById('b2_shortNote').innerHTML = shortNoteHtml;
+
+  document.getElementById('b2_headlineTax').innerHTML = won(finalTotal) + '<span>원</span>';
+  document.getElementById('b2_headlineSub').textContent =
+    '사업용 토지 — 일반세율 적용(가산 없음)' + (jointOn ? ` · 공유자 ${owners.length}명 인별 합산` : '');
+
+  document.getElementById('b2_breakdown').innerHTML = `
+    <div class="brow"><span class="k">양도차익 합계 (양도가액 − 취득가액 − 필요경비)</span><span class="v">${won(aggGain)}원</span></div>
+    <div class="brow sub"><span class="k">장기보유특별공제 (${(deductRate*100).toFixed(0)}%)</span><span class="v">-${won(aggLtcgDeduct)}원</span></div>
+    <div class="brow"><span class="k">양도소득금액 합계</span><span class="v">${won(aggAfterLtcg)}원</span></div>
+    <div class="brow sub"><span class="k">양도소득 기본공제 (인별 250만원${jointOn?' × '+owners.length+'명':''})</span><span class="v">-${won(aggBasicDeduct)}원</span></div>
+    <div class="brow"><span class="k">과세표준 합계</span><span class="v">${won(aggTaxBase)}원</span></div>
+    <div class="brow"><span class="k">양도소득세 합계</span><span class="v">${won(aggNationalTax)}원</span></div>
+    <div class="brow sub"><span class="k">지방소득세 합계 (10%)</span><span class="v">${won(aggLocalTax)}원</span></div>
+    <div class="brow total"><span class="k">총 납부세액</span><span class="v">${won(finalTotal)}원</span></div>
+    <div class="brow" style="margin-top:6px;padding-top:14px;border-top:1px solid rgba(255,255,255,.22);"><span class="k">양도대금 (양도가액 − 필요경비)</span><span class="v">${won(inputs.transfer - inputs.expense)}원</span></div>
+    <div class="brow total"><span class="k">양도 후 실수령액 (세후 현금)</span><span class="v" style="color:#BEE3D0;">${won(netCashTotal)}원</span></div>
+  `;
+
+  const ownerWrap = document.getElementById('b2_ownerBreakdownWrap');
+  if (jointOn && owners.length > 1){
+    ownerWrap.style.display = 'block';
+    document.getElementById('b2_ownerTable').innerHTML = `
+      <thead><tr><th>공유자</th><th>지분율</th><th>양도차익</th><th>과세표준</th><th>산출세액(지방세 포함)</th><th>실수령액(세후)</th></tr></thead>
+      <tbody>
+        ${ownerResults.map(o=>`
+          <tr>
+            <td>${o.name}${o.flatApplied?' <span style="font-size:11px;color:#F3E9D2;">(단기특례)</span>':''}</td>
+            <td>${(o.share*100).toFixed(2)}%</td>
+            <td>${won(o.calc.gain)}원</td>
+            <td>${won(o.calc.taxBase)}원</td>
+            <td>${won(o.ownerFinal)}원</td>
+            <td style="color:#BEE3D0;">${won(o.netCash)}원</td>
+          </tr>
+        `).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="4">합계</td><td>${won(finalTotal)}원</td><td style="color:#F3E9D2;">${won(netCashTotal)}원</td></tr></tfoot>
+    `;
+  } else {
+    ownerWrap.style.display = 'none';
+  }
+}
+
+['b2_acquire','b2_transfer','b2_expense','b2_years','b2_months'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', b2Render);
+  document.getElementById(id).addEventListener('change', b2Render);
+});
+b2Render();
+
 
 function getInputs(){
   return {
@@ -1760,7 +2001,7 @@ function render(){
 
 // ---- 탭 전환 ----
 function switchTab(name){
-  ['calc','legal','ref','parking','sync'].forEach(t=>{
+  ['calc','bizonly','legal','ref','parking','sync'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
     document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
   });
