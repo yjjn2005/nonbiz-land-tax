@@ -295,6 +295,9 @@
   <nav class="tabnav">
     <button class="tabbtn active" data-tab="calc" onclick="switchTab('calc')">직접계산</button>
     <button class="tabbtn" data-tab="bizonly" onclick="switchTab('bizonly')">사업용 양도세</button>
+    <button class="tabbtn" data-tab="njguide" onclick="switchTab('njguide')">농지전수조사 가이드</button>
+    <button class="tabbtn" data-tab="penalty" onclick="switchTab('penalty')">이행강제금</button>
+    <button class="tabbtn" data-tab="todo" onclick="switchTab('todo')">체크리스트</button>
     <button class="tabbtn" data-tab="legal" onclick="switchTab('legal')">조세심판원 판례검색</button>
     <button class="tabbtn" data-tab="ref" onclick="switchTab('ref')">지목별 근거자료</button>
     <button class="tabbtn" data-tab="parking" onclick="switchTab('parking')">노외주차장 판례</button>
@@ -582,6 +585,203 @@
     </div>
   </section>
   </div><!-- /tab-bizonly -->
+
+  <div class="tabpanel" id="tab-njguide" style="display:none;">
+  <section class="block">
+    <div class="blockTitle">농지 전수조사 대응 가이드</div>
+    <div class="notice" style="margin-top:0;">
+      2026년(1996년 이후 취득분) → 2027년(그 이전 취득분) 2단계 전수조사. AI·3년치 항공사진으로 확인하며, 적발 후에는 농지은행 위탁이 막히므로 조사 전에 정비하는 것이 유일한 전략입니다.
+      <br><b>[2026.9.21 보완대책]</b> 고령자 휴경지·상속 농지 등 경미한 위반은 처분의무를 수년간 유예하는 '농지이용 정상화를 위한 특별조치법'(가칭) 제정 추진 중(연내 제정안 → 내년 1분기 시행 목표). 투기 목적이 명백한 경우는 유예 없이 현행대로 처분됩니다.
+    </div>
+    <div id="njContextNote" style="margin-top:12px;"></div>
+
+    <div class="card">
+      <h3>1. [속보] 처분유예 보완대책 핵심 요약</h3>
+      <ul style="font-size:13.5px;color:var(--soil-700);line-height:1.8;padding-left:18px;margin:0;">
+        <li>농식품부, 2026.9.21 보완 대책 발표 — 고령자 휴경지·상속 농지 등 관행적 위반까지 헐값에 땅을 팔아야 하는 불안을 제도적으로 해소하려는 취지</li>
+        <li>연내 <b>'농지이용 정상화를 위한 특별조치법'(가칭)</b> 제정 추진 — 12월까지 제정안 마련 → 국회 통과 → <b>내년 1분기 시행 목표</b></li>
+        <li>대상① 소유상한(1㏊) 초과 또는 질병 등으로 휴경 중인 상속·이농 농지 — 농지은행 위탁 시 처분의무 <b>수년 유예</b></li>
+        <li>대상② 자녀 증여 후 부모의 계속 경작, 교환경작, 마을 농지 모음 경작 등 <b>관행적 임대차</b> — 농지은행 위탁 시 적법 경작 인정</li>
+        <li>대상③ 소유자 불분명 <b>미등기 상속 농지</b> — 대리경작자 지정 또는 재산세 납부자 위탁 허용</li>
+        <li>대상④ <b>공유 농지</b>(투기 목적 제외) — 과반 지분 동의로 농지은행 위탁 가능</li>
+        <li>절차 없이 설치된 농업용·공공시설 등 <b>불법 전용시설</b>은 농지보전부담금 부과 후 사후 전용 추인(양성화). 비닐하우스 위장 식당·태양광 등 편법 이용은 양성화 대상 아님</li>
+        <li><b>투기 목적이 명백한 행위(거짓 영농계획서, 허위 취득 후 무단휴경·불법임대, 위장 농업법인, 공유지분 쪼개기 등)는 유예 없이 원상회복명령·처분명령 그대로 적용</b></li>
+        <li>실제 위반 확정·처분의무 통지 등 사후 절차는 심층조사를 거쳐 <b>2027년 이후 본격 진행</b> — 지금 당장 처분의무가 부과되는 것은 아니지만, 위탁·정비는 조사 전에 해두는 것이 유리</li>
+      </ul>
+    </div>
+
+    <details class="basis">
+      <summary>2. 조사 개요와 일정</summary>
+      <div class="table-scroll"><table style="margin-top:10px;font-size:13px;">
+        <tr><th>단계</th><th>시기</th><th>대상</th><th>점검</th></tr>
+        <tr><td>1단계</td><td>2026.5~12</td><td>1996.1.1 이후 취득 (약 1,049만 필지·136만ha)</td><td>소유 제한·무단 휴경·불법 임대차·불법 전용</td></tr>
+        <tr><td>2단계</td><td>2027년</td><td>1996.1.1 이전 취득 (약 80만ha)</td><td>불법 전용·형상 훼손</td></tr>
+      </table></div>
+      <ul style="margin-top:10px;">
+        <li>1996년 이전 취득 농지는 휴경·임대는 면책되지만 <b>불법 전용(주차장·야적장·고물상)은 예외 없이 제재</b></li>
+        <li>도시지역 내 농지도 전용 절차 완료 전까지는 농지 — 나대지 방치 시 처분 대상</li>
+        <li>3년치 항공사진 + AI 판독: 조사 때만 작물 심는 편법 차단, 서류 불일치는 심층조사 자동 편입</li>
+        <li>기본조사 결과 위반 의심 27% — 불법 임대차 21.1%, 무단 휴경 11.6%, 불법 전용 9.0%</li>
+      </ul>
+    </details>
+
+    <details class="basis">
+      <summary>3. 자경 인정 기준</summary>
+      <ul>
+        <li>농업경영체 등록만으로 자경 인정 안 됨. <b>농작업 1/2 이상 자기 노동력</b> 투입을 소유자가 입증</li>
+        <li>증빙: 본인 명의 농약·비료·종자·면세유 영수증, 농협 수매·공판장 출하, 직불금·재해보험</li>
+        <li>세법상 재촌 요건: 소재지 동일·연접 시군구 또는 직선 30km 이내 거주 (이 앱 ①번 판정과 동일 기준)</li>
+        <li>농업 외 소득 연 3,700만원 이상인 연도는 자경 기간에서 제외</li>
+      </ul>
+    </details>
+
+    <details class="basis">
+      <summary>4. 처분의무 → 처분명령 → 이행강제금</summary>
+      <ul>
+        <li>사유 발생 1년 내 처분의무 → 불이행 시 6개월 처분명령 → 불이행 시 <b>공시지가·감정가 중 높은 금액의 25% 매년</b> 부과</li>
+        <li>2026.8.28부터 처분명령은 지자체 <b>의무</b>. 배우자·자녀·본인 법인 등 특수관계인 매각 차단</li>
+        <li>불복은 30일 내 이의 → 비송사건 재판만 가능. 임차인 명도 거부는 정당한 사유로 거의 인정 안 됨</li>
+        <li>유일한 면책: 원상복구 + 자경 재개 또는 농어촌공사 매도위탁 → 3년 유예, 경과 시 처분의무 소멸</li>
+        <li><b>[2026.9.21 보완대책]</b> 고령자 휴경지·상속 농지 등 관행적·경미한 위반은 농지은행 위탁을 조건으로 처분의무 자체를 <b>수년간 유예</b> — 투기 목적이 명백한 위반은 유예 없이 현행대로 처분</li>
+      </ul>
+      <div style="margin-top:10px;"><a href="#" onclick="switchTab('penalty');return false;" class="chip" style="text-decoration:none;">→ 이행강제금 계산해보기</a></div>
+    </details>
+
+    <details class="basis">
+      <summary>5. 농지를 임대 중이라면</summary>
+      <ul>
+        <li>임대 허용 사유: 1996년 이전 취득 / 상속 / 8년 자경 후 이농 / 60세 이상+5년 자경 / 농지은행 위탁 / 주말영농(1,000㎡ 미만). 그 외 임대는 전부 불법</li>
+        <li>조사는 <b>농지대장·경영체 등록·직불금 수령자·계약서·현장</b>의 일치를 대조</li>
+        <li>서면계약 의무, 임대차 3년 보장·자동갱신, 농지대장 60일 내 변경신고(과태료 300/500만)</li>
+        <li>직불금은 반드시 실경작자(임차인)가 수령 — 소유자 수령은 부정수급(환수+최대 5배 제재부가금)</li>
+        <li><b>[2026.9.21 보완대책]</b> 자녀 증여 후 부모 계속 경작, 교환경작, 마을 단위 농지 모음(품앗이) 경작 등 관행적 임대차도 농지은행 위탁 시 <b>적법한 경작으로 인정</b></li>
+      </ul>
+      <div style="margin-top:10px;font-size:12.5px;color:var(--soil-500);">※ 이 앱 ①번 판정에서 "임대 중"으로 답하면 자동 적용되는 법정 예외 사유와 동일한 내용입니다.</div>
+    </details>
+
+    <details class="basis">
+      <summary>6. 상속 농지 (고령 상속인 임대 사례)</summary>
+      <ul>
+        <li>상속 농지 임대는 <b>합법</b>. 쌀 등 현물 임대료 무방, 논밭 임대소득은 소득세 비과세</li>
+        <li>종전 규정: 비경작 상속인 1만㎡까지 소유, 초과분은 농지은행 위탁 필요</li>
+        <li>개정법(2026.8.28 시행)의 상속농지 위탁 의무는 <b>기존 상속인에게 미적용</b>(부칙 경과조치). 개정규정 시행 후 새로 상속받으면 위탁 의무</li>
+        <li>증여로 미리 넘기면 "상속" 사유가 사라져 즉시 불법 임대 — 상속이 유리</li>
+        <li>양도세: 피상속인 8년 재촌·자경 입증 시 임대 중이어도 사업용(도시지역 제외). 상속 3년 내 양도도 사업용. 농지은행 8년 위탁도 사업용</li>
+        <li><b>[2026.9.21 보완대책]</b> 소유 상한(1㏊) 초과분 또는 질병 등으로 휴경 중인 상속·이농 농지 → 농지은행 위탁 시 처분의무 <b>수년간 유예</b>. 미등기 상속 농지는 대리경작자 지정·재산세 납부자 위탁 허용. 공유 농지는 과반 지분 동의로 위탁 가능</li>
+      </ul>
+    </details>
+
+    <details class="basis">
+      <summary>7. 2028년 양도세 강화</summary>
+      <div class="table-scroll"><table style="margin-top:10px;font-size:13px;">
+        <tr><th>구분</th><th>2027년까지</th><th>2028년 이후</th></tr>
+        <tr><td>중과세율</td><td>기본세율+10%p</td><td><b>기본세율+20%p</b></td></tr>
+        <tr><td>최고세율(지방세 포함)</td><td>60.5%</td><td><b>71.5%</b></td></tr>
+        <tr><td>장기보유특별공제</td><td>최대 30%</td><td><b>폐지</b></td></tr>
+        <tr><td>15년·차익 2억 예시</td><td>5,108만원</td><td>1억 407만원</td></tr>
+      </table></div>
+      <div style="margin-top:10px;"><a href="#" onclick="switchTab('calc');return false;" class="chip" style="text-decoration:none;">→ 직접계산 탭에서 정확한 세액 계산</a></div>
+    </details>
+
+    <details class="basis">
+      <summary>8. 불법 전용시설 — 양성화 절차 (2026.9.21 보완대책)</summary>
+      <ul>
+        <li>절차 없이 설치된 <b>농업용·공공시설</b> 등은 농지보전부담금을 부과한 뒤 사후 전용을 추인 — 합법 상태로 전환 가능</li>
+        <li>단, 비닐하우스로 위장한 식당·태양광 발전 등 <b>편법 이용은 양성화 대상 아님</b> — 자진 정비 기간을 두고 본래 용도로 원상교정 유도</li>
+        <li>시세차익·개발이익 목적 거짓 영농계획서, 허위 농지취득 후 무단휴경·불법임대, 위장 농업법인 기획부동산·지분쪼개기, 경매 공유지분 무단휴경, 농업진흥지역 내 야적장·야영장 등 <b>명백한 투기 행위는 유예 없이 원상회복명령·처분명령</b> 그대로 적용</li>
+        <li>항공사진·데이터 분석·청문 절차로 투기 여부를 가려낸 뒤 제재 여부 결정</li>
+      </ul>
+    </details>
+
+    <details class="basis">
+      <summary>9. 농지은행·매수청구</summary>
+      <ul>
+        <li>적발 <b>전</b> 농지은행 임대수탁 = 완전 면책, 수수료 전면 면제. 적발 후에는 위탁 불가</li>
+        <li>8년 이상 위탁 시 사업용 토지 인정 → 중과 회피 (이 앱 ①번 판정의 "한국농어촌공사 8년 이상 위탁임대" 예외와 동일)</li>
+        <li>매수청구는 공시지가 기준(통상 시세의 60~70%) — 이행강제금 누적과 비교해 결정</li>
+        <li>신고포상금 연 1,500만원(10배 인상) — 구두 임대차는 숨을 곳이 없음</li>
+        <li>농지은행 <b>공공매입 사업(감정평가액 기준)</b>, 농지연금, 농지이양은퇴직불 등 고령농 현금화·유동화 지원 예산 증액 추진(국회 심의 중)</li>
+      </ul>
+    </details>
+
+    <footer style="margin-top:20px;">
+      농지법 개정(법률 제21798호, 2026.8.28 시행), 2026 세제개편안 기준. 개별 사안은 세무사·변호사 확인이 필요합니다.
+    </footer>
+  </section>
+  </div><!-- /tab-njguide -->
+
+  <div class="tabpanel" id="tab-penalty" style="display:none;">
+  <section class="block">
+    <div class="blockTitle">처분명령 불이행 이행강제금 누적</div>
+    <div id="penContextNote"></div>
+    <div class="notice" style="margin-top:0;">공시지가·감정평가액 중 높은 금액의 25%가 이행 시까지 매년 부과됩니다. 불복은 고지 후 30일 내 이의제기 → 비송사건 재판만 가능하고, 임차인 명도 거부는 정당한 사유로 거의 인정되지 않습니다.</div>
+
+    <div class="card">
+      <h3>입력</h3>
+      <div class="field">
+        <button class="syncBtn ghost" style="width:100%;" onclick="applyPenaltyFromLookup()">⓪번 지번조회 결과로 자동 채우기 (공시지가·시세)</button>
+        <div class="unit" id="penApplyHint">⓪번에서 지번을 조회하면 개별공시지가·면적 기준 시세가 자동으로 들어옵니다</div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="pn_gov">개별공시지가 합계</label>
+          <input type="number" id="pn_gov" value="70000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+        <div class="field">
+          <label for="pn_app">감정평가액 (없으면 0)</label>
+          <input type="number" id="pn_app" value="0" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="pn_mkt">시세</label>
+          <input type="number" id="pn_mkt" value="100000000" min="0" step="1000000">
+          <div class="unit">원</div>
+        </div>
+        <div class="field">
+          <label for="pn_years">미처분 연수</label>
+          <input type="number" id="pn_years" value="5" min="1" max="20" step="1">
+          <div class="unit">년</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="label">연간 이행강제금</div>
+      <div class="headline" id="pn_year">0<span>원</span></div>
+      <div class="subline" id="pn_base"></div>
+      <div class="breakdown">
+        <div class="brow total"><span class="k" id="pn_tot_label">누적</span><span class="v" id="pn_tot">0원</span></div>
+        <div class="brow"><span class="k">시세 대비</span><span class="v" id="pn_ratio">-</span></div>
+      </div>
+      <div class="shortNote" id="pn_break" style="display:block;"></div>
+    </div>
+
+    <div class="compare">
+      <div style="padding:14px 16px 0;font-size:13px;font-weight:700;color:var(--soil-700);">연차별 누적 내역</div>
+      <div class="table-scroll"><table id="pn_tbl" style="width:100%;"></table></div>
+    </div>
+  </section>
+  </div><!-- /tab-penalty -->
+
+  <div class="tabpanel" id="tab-todo" style="display:none;">
+  <section class="block">
+    <div class="blockTitle">전수조사 대응 체크리스트</div>
+    <div id="todoContextNote"></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--soil-500);" id="todoTxt">0 / 0 완료</div>
+        <button class="syncBtn ghost" style="padding:7px 14px;font-size:12px;" onclick="resetTodo()">전체 초기화</button>
+      </div>
+      <div style="height:8px;background:var(--wheat-100);border-radius:4px;overflow:hidden;margin-bottom:16px;">
+        <div id="todoBar" style="height:100%;width:0;background:var(--accent);transition:width .2s;"></div>
+      </div>
+      <div id="todoList"></div>
+    </div>
+  </section>
+  </div><!-- /tab-todo -->
 
   <div class="tabpanel" id="tab-legal" style="display:none;">
   <!-- ===================== 판례·심판례 검색 ===================== -->
@@ -1224,6 +1424,112 @@ function applyAcquirePriceFromYear(){
   render();
 }
 
+// ============ 이행강제금 계산기 ============
+function calcPenalty(){
+  const gov = Number(document.getElementById('pn_gov').value) || 0;
+  const app = Number(document.getElementById('pn_app').value) || 0;
+  const mkt = Number(document.getElementById('pn_mkt').value) || 0;
+  const yrs = Math.max(1, Number(document.getElementById('pn_years').value) || 1);
+  const base = Math.max(gov, app);
+  const yearly = base * 0.25;
+  document.getElementById('pn_year').innerHTML = won(yearly).replace('원','') + '<span>원</span>';
+  document.getElementById('pn_base').textContent = `기준가액 ${won(base)} × 25%${app > gov ? ' (감정가 기준)' : ' (공시지가 기준)'}`;
+  document.getElementById('pn_tot_label').textContent = `${yrs}년 누적`;
+  document.getElementById('pn_tot').textContent = won(yearly * yrs);
+  const ratio = mkt ? (yearly * yrs / mkt * 100) : 0;
+  document.getElementById('pn_ratio').textContent = mkt ? `시세의 ${ratio.toFixed(0)}%` : '-';
+  document.getElementById('pn_break').innerHTML = (mkt && yearly) ? `시세 전액 소진까지 약 <b>${(mkt/yearly).toFixed(1)}년</b>` : '';
+
+  let rows = '<thead><tr><th>연차</th><th>당해 부과</th><th>누적</th><th>시세 대비</th></tr></thead><tbody>';
+  for (let i=1; i<=yrs; i++){
+    const cum = yearly * i;
+    const r = mkt ? (cum/mkt*100) : 0;
+    rows += `<tr${r>=100?' style="color:var(--danger);font-weight:700;"':''}><td>${i}년차</td><td>${won(yearly)}</td><td>${won(cum)}</td><td>${r.toFixed(0)}%</td></tr>`;
+  }
+  rows += '</tbody>';
+  document.getElementById('pn_tbl').innerHTML = rows;
+}
+['pn_gov','pn_app','pn_mkt','pn_years'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', calcPenalty);
+  document.getElementById(id).addEventListener('change', calcPenalty);
+});
+
+function applyPenaltyFromLookup(){
+  const hint = document.getElementById('penApplyHint');
+  const r = window.__lcLastResult;
+  if (!r || !r.latestPrice || !r.area){
+    hint.textContent = '⓪번에서 지번을 먼저 조회해야 공시지가·면적을 가져올 수 있습니다.';
+    hint.style.color = 'var(--danger)';
+    return;
+  }
+  const ppm = Number(r.latestPrice.pblntfPclnd);
+  const govTotal = Math.round(ppm * r.area);
+  document.getElementById('pn_gov').value = govTotal;
+  const comp = window.__lcCompResult;
+  if (comp && comp.estTotal){
+    document.getElementById('pn_mkt').value = Math.round(comp.estTotal);
+    hint.innerHTML = `공시지가 ${won(govTotal)}, 시세 ${won(Math.round(comp.estTotal))}(실거래가 비교 결과) 적용됨`;
+  } else {
+    hint.innerHTML = `공시지가 ${won(govTotal)} 적용됨 — 시세는 ⓪번 "인근 실거래가 비교"를 먼저 실행하면 같이 채워집니다`;
+  }
+  hint.style.color = 'var(--soil-500)';
+  calcPenalty();
+}
+
+// ============ 전수조사 대응 체크리스트 ============
+const TODO_ITEMS = [
+  ['필지별 현황표 작성 — 취득 시점(1996 전/후)·지목·실제 이용·임대 형태·도시지역 여부','기초'],
+  ['불법 전용 상태(컨테이너·야적·주차장 등) 원상복구','긴급'],
+  ['자경 불가 농지 → 농지은행 임대수탁 신청 (적발 전, 수수료 면제)','긴급'],
+  ['자경 농지 증빙 정리 — 농약·비료·면세유 영수증, 수매·출하 내역, 직불금','자경'],
+  ['임대차 서면계약 작성 (용도제한·즉시해지·원상복구·전대 금지 조항)','임대'],
+  ['농지대장 임대차 변경신고 (60일 내)','임대'],
+  ['직불금 수령자를 실경작자(임차인)로 정리','임대'],
+  ['소유자 명의 농업경영체 등록 정리 (실경작자와 일치)','임대'],
+  ['상속 농지 총면적 확인 — 1만㎡ 초과분 농지은행 위탁','상속'],
+  ['피상속인 8년 재촌·자경 증빙 수집 (농지원부·직불금·조합원·수매·마을 확인서)','상속'],
+  ['미등기 상속 농지 — 대리경작자 지정 또는 재산세 납부자 위탁 신청 검토 (2026.9.21 보완대책)','상속'],
+  ['공유 농지 — 과반 지분 동의로 농지은행 위탁 가능 여부 공유자와 협의 (2026.9.21 보완대책)','상속'],
+  ['농지이용 정상화 특별조치법(가칭) 제정 일정·유예 기간 확정 여부 주기적 확인','기초'],
+  ['매각 계획 검토 — 2027년 내 매각 vs 장기 보유(위탁 8년) 세액 비교 ("직접계산" 탭 연동)','세금'],
+  ['상속·증여 시 감정평가 신고 검토 (취득가액 상향)','세금'],
+  ['위반 통보·처분 관련 공문 전부 보관 (30일 이의 기한 관리)','분쟁']
+];
+let todoState = {};
+function loadTodoLocal(){
+  try{ const s = localStorage.getItem('nonbiz-land-tax-todo'); if (s) todoState = JSON.parse(s); }catch(e){}
+}
+function saveTodoLocal(){
+  try{ localStorage.setItem('nonbiz-land-tax-todo', JSON.stringify(todoState)); }catch(e){}
+}
+function renderTodo(){
+  const box = document.getElementById('todoList');
+  let done = 0;
+  box.innerHTML = TODO_ITEMS.map((it, i) => {
+    const id = 'td'+i;
+    const checked = !!todoState[id];
+    if (checked) done++;
+    return `<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--wheat-100);cursor:pointer;font-size:13.5px;color:${checked?'var(--soil-500)':'var(--soil-900)'};${checked?'text-decoration:line-through;':''}">
+      <input type="checkbox" id="${id}" ${checked?'checked':''} onchange="toggleTodo('${id}')" style="width:auto;margin-top:3px;flex-shrink:0;">
+      <span><span class="chip" style="cursor:default;padding:2px 8px;font-size:11px;margin-right:6px;">${it[1]}</span>${it[0]}</span>
+    </label>`;
+  }).join('');
+  document.getElementById('todoTxt').textContent = `${done} / ${TODO_ITEMS.length} 완료`;
+  document.getElementById('todoBar').style.width = (done/TODO_ITEMS.length*100) + '%';
+}
+function toggleTodo(id){
+  todoState[id] = !todoState[id];
+  saveTodoLocal();
+  renderTodo();
+}
+function resetTodo(){
+  if (!confirm('체크리스트를 전체 초기화할까요?')) return;
+  todoState = {};
+  saveTodoLocal();
+  renderTodo();
+}
+loadTodoLocal();
+
 function applyTransferPriceFromUnit(){
   const hint = document.getElementById('transferUnitHint');
   const area = Number(document.getElementById('transferArea').value) || 0;
@@ -1837,6 +2143,7 @@ function b2Render(){
   document.getElementById(id).addEventListener('change', b2Render);
 });
 b2Render();
+calcPenalty();
 
 
 function getInputs(){
@@ -2026,7 +2333,7 @@ function render(){
 
 // ---- 탭 전환 ----
 function switchTab(name){
-  ['calc','bizonly','legal','ref','parking','sync'].forEach(t=>{
+  ['calc','bizonly','njguide','penalty','todo','legal','ref','parking','sync'].forEach(t=>{
     document.getElementById('tab-'+t).style.display = (t===name) ? '' : 'none';
     document.querySelector(`.tabbtn[data-tab="${t}"]`).classList.toggle('active', t===name);
   });
@@ -2035,6 +2342,31 @@ function switchTab(name){
     document.getElementById('refLandType').value = mainType;
     loadRefData();
   }
+  if (name === 'njguide') renderNjContext();
+  if (name === 'penalty') renderNjContext('penalty');
+  if (name === 'todo'){ renderNjContext('todo'); renderTodo(); }
+}
+
+// ---- 지목별/판정 컨텍스트를 가이드·이행강제금·체크리스트 탭에 일관되게 반영 ----
+function renderNjContext(which){
+  const type = document.getElementById('landType').value;
+  const typeLabel = TYPE_CONFIGS[type] ? TYPE_CONFIGS[type].label : type;
+  const r = window.__lcLastResult;
+  const addr = r ? r.addr : null;
+  const badgeText = document.getElementById('verdictBadge')?.textContent?.trim() || '';
+  let html;
+  if (type !== 'farm'){
+    html = `<div class="notice" style="margin-top:0;background:var(--danger-soft);border-color:#e3b3ac;color:#8c1e17;">
+      ※ 현재 "직접계산" 탭에서 선택된 토지유형은 <b>${typeLabel}</b>입니다. 이 가이드·이행강제금·체크리스트는 <b>농지(전·답·과수원) 전수조사</b>에 특화된 내용이라 다른 지목에는 그대로 적용되지 않을 수 있습니다.
+    </div>`;
+  } else {
+    html = `<div class="notice" style="margin-top:0;">
+      현재 "직접계산" 탭 기준: <b>${typeLabel}</b>${addr ? ' · '+addr : ''}${badgeText ? ' · '+badgeText : ''}
+    </div>`;
+  }
+  const targetId = which === 'penalty' ? 'penContextNote' : which === 'todo' ? 'todoContextNote' : 'njContextNote';
+  const el = document.getElementById(targetId);
+  if (el) el.innerHTML = html;
 }
 
 const CHIP_SUGGESTIONS = {
@@ -2279,6 +2611,13 @@ async function saveToCloud(){
     jointOn: document.getElementById('jointOn').checked,
     ownerCount: document.getElementById('ownerCount').value,
     owners: getOwners().map(o=>({name:o.name, sharePct: o.share*100})),
+    todoState: todoState,
+    penalty: {
+      gov: document.getElementById('pn_gov').value,
+      app: document.getElementById('pn_app').value,
+      mkt: document.getElementById('pn_mkt').value,
+      years: document.getElementById('pn_years').value
+    },
     savedAt: new Date().toISOString()
   };
   try{
@@ -2347,6 +2686,14 @@ async function loadFromCloud(){
           updateOwnerShareTotal();
         }
       }
+    }
+    if (data.todoState){ todoState = data.todoState; saveTodoLocal(); renderTodo(); }
+    if (data.penalty){
+      if (data.penalty.gov !== undefined) document.getElementById('pn_gov').value = data.penalty.gov;
+      if (data.penalty.app !== undefined) document.getElementById('pn_app').value = data.penalty.app;
+      if (data.penalty.mkt !== undefined) document.getElementById('pn_mkt').value = data.penalty.mkt;
+      if (data.penalty.years !== undefined) document.getElementById('pn_years').value = data.penalty.years;
+      calcPenalty();
     }
     if (data.mode) setMode(data.mode); else render();
     const savedAtText = data.savedAt ? new Date(data.savedAt).toLocaleString('ko-KR') : '알 수 없음';
