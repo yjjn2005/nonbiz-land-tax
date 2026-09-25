@@ -363,6 +363,13 @@
       </div>
       <div id="lcStatus" style="font-size:12.5px;color:var(--soil-500);margin-top:4px;"></div>
       <div id="lcResult" style="margin-top:10px;"></div>
+      <div id="favBox" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:700;color:var(--soil-700);">★ 즐겨찾기 지번</span>
+          <span class="unit" id="favHint" style="margin:0;">조회 후 "즐겨찾기 추가"를 누르면 저장됩니다 (PIN 동기화에 포함)</span>
+        </div>
+        <div id="favList" class="chipRow"></div>
+      </div>
     </div>
   </section>
 
@@ -1211,6 +1218,7 @@ async function runLandCheck(){
           <button class="syncBtn" onclick="applyLandCheckResult(${JSON.stringify({jimok, isCityZone, suggestedType}).replace(/"/g,'&quot;')})">이 결과를 ② 판정에 적용</button>
           <button class="syncBtn ghost" onclick="runComparableTradesLC()">인근 실거래가 비교</button>
           <button class="syncBtn ghost" onclick="loadBldTitleLC()">건축물대장 조회</button>
+          <button class="syncBtn ghost" onclick="addFavorite()">★ 즐겨찾기 추가</button>
           <button class="syncBtn ghost" id="lcBrochureBtn" onclick="toggleBrochureLC()">매도 브로셔 보기</button>
           <a href="https://yjjn2005.github.io/land-check/" target="_blank" rel="noopener" class="syncBtn ghost" style="text-decoration:none;display:inline-flex;align-items:center;">건폐율·용적률·행위제한 상세보기 →</a>
         </div>
@@ -1654,6 +1662,45 @@ function applyTransferPriceFromComp(){
   hint.style.color = 'var(--soil-500)';
   render();
 }
+
+// ============ 즐겨찾기 지번 ============
+let favList = [];
+function loadFavLocal(){ try{ const v = localStorage.getItem('nonbiz-land-tax-fav'); if (v) favList = JSON.parse(v) || []; }catch(e){} }
+function saveFavLocal(){ try{ localStorage.setItem('nonbiz-land-tax-fav', JSON.stringify(favList)); }catch(e){} }
+function renderFav(){
+  const box = document.getElementById('favList'); if (!box) return;
+  if (!favList.length){ box.innerHTML = '<span class="unit" style="margin:0;">저장된 즐겨찾기가 없습니다.</span>'; return; }
+  box.innerHTML = favList.map((f,i)=>`
+    <span class="chip" style="display:inline-flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;">
+      <span onclick="useFavorite(${i})" style="cursor:pointer;" title="PNU ${f.pnu||''}">${f.label}${f.jimok?' · '+f.jimok:''}${f.zone?' · '+f.zone:''}</span>
+      <button onclick="removeFavorite(${i})" title="삭제" style="border:none;background:transparent;color:var(--danger);font-weight:800;cursor:pointer;padding:0 2px;font-family:inherit;">×</button>
+    </span>`).join('');
+}
+function addFavorite(){
+  const r = window.__lcLastResult;
+  if (!r){ return; }
+  const key = r.d?.pnu || r.addr || document.getElementById('lcQuery').value.trim();
+  if (!key) return;
+  if (favList.some(f => (f.pnu && f.pnu === r.d?.pnu) || f.label === (r.addr||key))){
+    document.getElementById('favHint').textContent = '이미 즐겨찾기에 있습니다.'; return;
+  }
+  const label = (r.addr && !/^\d{19}$/.test(r.addr)) ? r.addr : (r.d?.pnu || key);
+  favList.unshift({ label, pnu: r.d?.pnu || '', query: label, jimok: r.jimok || '', zone: (r.zoneNames && r.zoneNames[0]) || '', ts: Date.now() });
+  favList = favList.slice(0, 30);
+  saveFavLocal(); renderFav();
+  document.getElementById('favHint').textContent = '즐겨찾기에 추가했습니다 (' + favList.length + '개).';
+}
+function useFavorite(i){
+  const f = favList[i]; if (!f) return;
+  // PNU가 있으면 PNU로 조회(브이월드 주소검색 없이도 동작), 없으면 주소로
+  document.getElementById('lcQuery').value = f.pnu || f.query || f.label;
+  runLandCheck();
+}
+function removeFavorite(i){
+  favList.splice(i,1); saveFavLocal(); renderFav();
+}
+loadFavLocal();
+document.addEventListener('DOMContentLoaded', renderFav);
 
 function applyLandCheckResult(info, auto){
   if (info.suggestedType && TYPE_CONFIGS[info.suggestedType]){
@@ -2723,6 +2770,7 @@ async function saveToCloud(){
     ownerCount: document.getElementById('ownerCount').value,
     owners: getOwners().map(o=>({name:o.name, sharePct: o.share*100})),
     todoState: todoState,
+    favorites: favList,
     penalty: {
       gov: document.getElementById('pn_gov').value,
       app: document.getElementById('pn_app').value,
@@ -2799,6 +2847,7 @@ async function loadFromCloud(){
       }
     }
     if (data.todoState){ todoState = data.todoState; saveTodoLocal(); renderTodo(); }
+    if (Array.isArray(data.favorites)){ favList = data.favorites; saveFavLocal(); renderFav(); }
     if (data.penalty){
       if (data.penalty.gov !== undefined) document.getElementById('pn_gov').value = data.penalty.gov;
       if (data.penalty.app !== undefined) document.getElementById('pn_app').value = data.penalty.app;
