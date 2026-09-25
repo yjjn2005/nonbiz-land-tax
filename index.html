@@ -368,9 +368,9 @@
 
     <div class="card">
       <h3>지적도·지도에서 보기</h3>
-      <div class="unit" style="margin-bottom:10px;">조회한 필지를 외부 지도 서비스에서 지적선·용도지역과 함께 봅니다 (새 창). 위에서 조회하면 주소가 자동으로 들어갑니다.</div>
+      <div class="unit" style="margin-bottom:10px;">위에서 지번을 조회하면 <b>토지이음은 PNU로 해당 필지 페이지가 바로 열리고</b>(지적 확인도면·용도지역·행위제한 자동 표시), 카카오·네이버 지도는 주소가 자동 입력됩니다 (새 창).</div>
       <div class="chipRow">
-        <a id="mapEum" class="chip" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank" rel="noopener" style="text-decoration:none;">토지이음(국토부) — 지적도+용도지역</a>
+        <a id="mapEum" class="chip" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank" rel="noopener" style="text-decoration:none;background:var(--accent-deep);color:#fff;border-color:var(--accent-deep);font-weight:700;">토지이음(국토부) — 지적도·용도지역 자동 열람</a>
         <a id="mapKakao" class="chip" href="https://map.kakao.com/" target="_blank" rel="noopener" style="text-decoration:none;">카카오맵 (지적편집도 켜기)</a>
         <a id="mapNaver" class="chip" href="https://map.naver.com/" target="_blank" rel="noopener" style="text-decoration:none;">네이버지도 (지적편집도 켜기)</a>
       </div>
@@ -1222,11 +1222,12 @@ async function runLandCheck(){
     window.__lcLastResult = {d, jimok, isCityZone, suggestedType, zoneNames, others, area, areaCd, latestPrice, addr};
     // 지적도·지도 링크에 주소 반영
     try{
-      const q = encodeURIComponent(addr || d.addrLabel || '');
-      const eum = document.getElementById('mapEum'); if (eum) eum.href = 'https://www.eum.go.kr/web/am/amMain.jsp';
-      const kk = document.getElementById('mapKakao'); if (kk) kk.href = 'https://map.kakao.com/?q=' + q;
-      const nv = document.getElementById('mapNaver'); if (nv) nv.href = 'https://map.naver.com/p/search/' + q;
-      const eumBox = document.getElementById('mapEumHint'); if (eumBox) eumBox.textContent = '토지이음은 주소 자동입력이 안 되어, 열린 뒤 "' + (addr||'') + '" 를 검색하세요. PNU: ' + (d.pnu||'');
+      const addrText = (addr && !/^\d{19}$/.test(addr)) ? addr : ((d.addrLabel && !/^\d{19}$/.test(d.addrLabel)) ? d.addrLabel : '');
+      const q = encodeURIComponent(addrText);
+      const eum = document.getElementById('mapEum'); if (eum && d.pnu) eum.href = 'https://www.eum.go.kr/web/ar/lu/luLandDet.jsp?isNoScr=script&s_type=1&pnu=' + d.pnu;
+      const kk = document.getElementById('mapKakao'); if (kk) kk.href = q ? ('https://map.kakao.com/?q=' + q) : 'https://map.kakao.com/';
+      const nv = document.getElementById('mapNaver'); if (nv) nv.href = q ? ('https://map.naver.com/p/search/' + q) : 'https://map.naver.com/';
+      const eumBox = document.getElementById('mapEumHint'); if (eumBox) eumBox.innerHTML = '<b>토지이음</b>은 PNU(' + (d.pnu||'') + ')로 바로 열려 ' + (addr||'') + '의 토지이용계획·확인도면(지적선+용도지역)이 자동 표시됩니다. 카카오·네이버는 열린 뒤 지도 설정에서 "지적편집도"를 켜세요.';
     }catch(e){}
     // 조회 즉시 자동으로 ①번 판정에 반영 (버튼을 눌러야만 반영되던 것을 자동화)
     applyLandCheckResult({jimok, isCityZone, suggestedType}, true);
