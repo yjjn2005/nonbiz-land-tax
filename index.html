@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>건축·용도지역·공시지가·비사업용토지판정 양도세 계산기</title>
 <style>
   :root{
@@ -325,7 +328,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">토지 조회 · 판정 · 양도소득세</div>
+    <div class="eyebrow">토지 조회 · 판정 · 양도소득세 <span id="appVer" style="margin-left:8px;opacity:.7;font-weight:600;"></span></div>
     <h1>건축·용도지역·공시지가·비사업용토지판정 양도세 계산기</h1>
     <p class="lede">소득세법 제104조의3 및 시행령 제168조의6~168조의13에 따라 해당 토지가 사업용/비사업용 토지 중 어디에 해당하는지 직접 판정한 뒤, 그 결과에 맞는 세율로 양도소득세를 계산합니다.</p>
     <details class="notice" style="margin-top:14px;">
@@ -1067,6 +1070,7 @@
 </div>
 
 <script>
+const APP_VERSION = 'v2026.09.25-06';
 // ============ 지번(주소) 자동조회 — land-check 앱과 동일한 API 재사용 ============
 // (land-check-api Worker, 브이월드 개발키를 그대로 호출 — 로직 중복 없이 데이터 소스만 공유)
 const LC_VWORLD_KEY = "F6799A65-7960-4D2E-AA41-1BACB4EAEB1D";
@@ -2789,7 +2793,7 @@ async function saveToCloud(){
       return;
     }
     const savedAtText = new Date(payload.savedAt).toLocaleString('ko-KR');
-    setSyncStatus(`저장 완료 (PIN: ${pin}, ${savedAtText}) — 다른 기기에서 같은 PIN으로 "불러오기"를 누르면 이 시각이 뜨는지 확인하세요.`, 'ok');
+    setSyncStatus(`저장 완료 (PIN: ${pin}, ${savedAtText}, 앱 ${APP_VERSION}) — 다른 기기도 같은 앱 버전인지 상단에서 확인한 뒤 같은 PIN으로 "불러오기"를 누르세요.`, 'ok');
   }catch(e){
     setSyncStatus('저장 실패: 인터넷 연결 또는 서버 상태를 확인하세요.', 'err');
   }
@@ -2857,7 +2861,7 @@ async function loadFromCloud(){
     }
     if (data.mode) setMode(data.mode); else render();
     const savedAtText = data.savedAt ? new Date(data.savedAt).toLocaleString('ko-KR') : '알 수 없음';
-    setSyncStatus(`불러오기 완료 (PIN: ${pin}) — 저장 시각: ${savedAtText}`, 'ok');
+    setSyncStatus(`불러오기 완료 (PIN: ${pin}, 앱 ${APP_VERSION}) — 저장 시각: ${savedAtText}${Array.isArray(data.favorites)?' · 즐겨찾기 '+data.favorites.length+'개 수신':' · 저장 당시 즐겨찾기 없음(저장한 기기 앱이 구버전이었을 수 있음)'}`, 'ok');
   }catch(e){
     setSyncStatus('불러오기 실패: 인터넷 연결을 확인하거나 잠시 후 다시 시도하세요.', 'err');
   }
@@ -2866,7 +2870,7 @@ async function loadFromCloud(){
 // 초기화
 onLandTypeChange();
 render();
-(function(){ const fh=document.getElementById('flowHint'); if(fh) fh.textContent = FLOW_HINTS.land; })();
+(function(){ const fh=document.getElementById('flowHint'); if(fh) fh.textContent = FLOW_HINTS.land; const av=document.getElementById('appVer'); if(av) av.textContent = APP_VERSION; })();
 </script>
 </body>
 </html>
